@@ -1,8 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
-import { Book } from "./model/book";
-import { readFile } from "fs/promises";
+import { router as bookRouter } from "./router/book";
 
 const main = async () => {
   const DB_HOST = process.env.DB_HOST || "127.0.0.1";
@@ -10,13 +9,9 @@ const main = async () => {
   const DB_NAME = process.env.DB_NAME;
   await mongoose.connect(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`);
 
-  const data = await readFile("./out.json", "utf-8");
-  const arr = JSON.parse(data);
-
-  await Book.insertMany(arr);
-
   const SERVER_PORT = process.env.SERVER_PORT || 5000;
   const app = express();
+  app.use("/books", bookRouter);
   app.listen(SERVER_PORT, () => {
     console.log("Server listening on port", SERVER_PORT);
   });

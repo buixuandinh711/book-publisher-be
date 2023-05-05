@@ -1,6 +1,7 @@
 import { Model, Schema, model } from "mongoose";
 
-interface IBook {
+export interface IBook {
+  id: number;
   name: string;
   image: string;
   originalPrice: number;
@@ -18,7 +19,7 @@ interface IBook {
 }
 
 interface IBookMethods {
-  toClient(): IBook;
+  toClient(imageWidth: number): IBook;
 }
 
 type BookModel = Model<IBook, {}, IBookMethods>;
@@ -42,10 +43,24 @@ const bookSchema = new Schema<IBook, BookModel, IBookMethods>({
   ],
 });
 
-bookSchema.methods.toClient = function (): IBook {
+bookSchema.methods.toClient = function (imageWidth: number): IBook {
+  // replace and remove unused fields
   const obj = this.toObject();
   obj.id = obj._id.toString();
   delete obj._id;
+  delete obj.__v;
+
+  if (obj.additionProps !== undefined) {
+    obj.additionProps.forEach((item: any) => {
+      delete item._id;
+    });
+  }
+
+  // resize image
+  obj.image = obj.image.replace(
+    "/image/upload/",
+    `/image/upload/w_${imageWidth}/`
+  );
 
   return obj;
 };
