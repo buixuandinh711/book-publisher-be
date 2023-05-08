@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
 import { router as bookRouter } from "./router/book";
+import cors from "cors";
 
 const main = async () => {
   const DB_HOST = process.env.DB_HOST || "127.0.0.1";
@@ -11,6 +12,11 @@ const main = async () => {
 
   const SERVER_PORT = process.env.SERVER_PORT || 5000;
   const app = express();
+  app.use(
+    cors({
+      origin: "*",
+    })
+  );
   app.use("/books", bookRouter);
   app.listen(SERVER_PORT, () => {
     console.log("Server listening on port", SERVER_PORT);
