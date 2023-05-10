@@ -4,6 +4,29 @@ import { DEFAULT_PAGE_LIMIT, ImageSize } from "../utils/const";
 import { PaginatedResult, QueryParams } from "../utils/type";
 const router = express.Router();
 
+router.get("/", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
+  const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
+
+  try {
+    const books = await Book.find()
+      .select("_id name image originalPrice discountPrice discountPercent")
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const count = await Book.countDocuments();
+
+    const transformedBooks: IBook[] = books.map((book) => book.toClient(ImageSize.Small));
+
+    return res.status(200).json({
+      results: transformedBooks,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+    });
+  } catch (error: any) {
+    return res.status(501).send(error.message);
+  }
+});
+
 router.get("/newest", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
   const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
 
