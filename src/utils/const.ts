@@ -1,4 +1,4 @@
-export const DEFAULT_PAGE_LIMIT = 10;
+export const DEFAULT_PAGE_LIMIT = 12;
 export enum ImageSize {
   Small = 240,
   Medium = 720,
