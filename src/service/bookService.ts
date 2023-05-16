@@ -128,3 +128,24 @@ export const getBookById = async (id: string): Promise<IBook | null> => {
     if (book === null) return null;
     return book.toClient(ImageSize.Medium);
 };
+
+export const countBooksInCategories = async () => {
+    const newBooksPromise = Book.countDocuments({ publicationYear: new Date().getFullYear() });
+    const classicBooksPromise = Book.countDocuments({ category: "Văn học kinh điển" });
+    const discountBooksPromise = Book.countDocuments({ discountPercent: { $gt: 0 } });
+    const popularBooksPromise = Book.countDocuments({});
+
+    const [newBooksCount, classicBooksCount, discountBooksCount, popularBooksCount] = await Promise.all([
+        newBooksPromise,
+        classicBooksPromise,
+        discountBooksPromise,
+        popularBooksPromise,
+    ]);
+
+    return {
+        newBooksCount,
+        classicBooksCount,
+        discountBooksCount,
+        popularBooksCount,
+    };
+};

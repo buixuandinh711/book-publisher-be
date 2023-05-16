@@ -3,6 +3,7 @@ import { Book, IBook } from "../model/bookModel";
 import { DEFAULT_PAGE_LIMIT, ImageSize } from "../utils/const";
 import { PaginatedResult, QueryParams } from "../utils/type";
 import {
+    countBooksInCategories,
     getAllBooks,
     getBookById,
     getClassicBooks,
@@ -125,6 +126,26 @@ router.get(
             const { id } = req.params;
             const relatedBooks = await getRelatedBooks(id);
             return res.status(200).json(relatedBooks);
+        } catch (error: any) {
+            return res.status(501).send(error.message);
+        }
+    }
+);
+
+router.get(
+    "/category-count",
+    async (
+        _,
+        res: Response<{
+            newBooksCount: number;
+            classicBooksCount: number;
+            discountBooksCount: number;
+            popularBooksCount: number;
+        }>
+    ) => {
+        try {
+            const bookCount = await countBooksInCategories();
+            return res.status(200).json(bookCount);
         } catch (error: any) {
             return res.status(501).send(error.message);
         }
