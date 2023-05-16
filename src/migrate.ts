@@ -1,4 +1,4 @@
-import { Book } from "./model/book";
+import { Book } from "./model/bookModel";
 import { readFile } from "fs/promises";
 import mongoose from "mongoose";
 import "dotenv/config";

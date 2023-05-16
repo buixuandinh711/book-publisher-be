@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import "dotenv/config";
-import { router as bookRouter } from "./router/book";
+import { router as bookRouter } from "./router/bookRouter";
 import cors from "cors";
 
 const main = async () => {
