@@ -11,7 +11,7 @@ interface IUserMethods {
     comparePassword: (password: string) => Promise<boolean>;
 }
 
-interface UserModel extends Model<IUser, {}, IUserMethods> {
+interface UserModel extends Model<IUser, unknown, IUserMethods> {
     createUser: (name: string, email: string, password: string) => Promise<HydratedDocument<IUser, IUserMethods>>;
 }
 
@@ -45,4 +45,4 @@ UserSchema.methods.comparePassword = async function (password: string): Promise<
     return await bcrypt.compare(password, this.password);
 };
 
-export default model<IUser>("User", UserSchema);
+export const User = model<IUser, UserModel>("User", UserSchema);
