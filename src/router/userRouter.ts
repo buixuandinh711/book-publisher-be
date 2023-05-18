@@ -12,19 +12,19 @@ router.post(
             return res.status(400).send("Not enough values in the request body");
         }
 
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(404).send("Email not registered");
-        }
-
-        const isMatched = await user.comparePassword(password);
-
-        if (!isMatched) {
-            return res.status(401).send("Wrong password");
-        }
-
         try {
+            const user = await User.findOne({ email });
+
+            if (!user) {
+                return res.status(404).send("Email not registered");
+            }
+
+            const isMatched = await user.comparePassword(password);
+
+            if (!isMatched) {
+                return res.status(401).send("Wrong password");
+            }
+
             req.session.regenerate(function (err) {
                 if (err) throw new Error("Unable to regenerate sessesion");
 
@@ -47,17 +47,40 @@ router.post(
 router.post(
     "/register",
     express.urlencoded({ extended: false }),
-    function (req: Request<unknown, unknown, Partial<IUser>>, res: Response) {
+    async function (req: Request<unknown, unknown, Partial<IUser>>, res: Response) {
         const { name, email, password } = req.body;
 
         if (name === undefined || email === undefined || password === undefined) {
-            res.status(400).send("Not enough values in the request body");
+            return res.status(400).send("Not enough values in the request body");
+        }
+
+        try {
+            const user = await User.findOne({ email });
+
+            if (user) {
+                return res.status(409).send("Email is already used");
+            }
+
+            const newUser = await User.createUser(name, email, password);
+
+            req.session.regenerate(function (err) {
+                if (err) throw new Error("Unable to regenerate sessesion");
+
+                req.session.userId = newUser.id;
+
+                req.session.save(function (err) {
+                    if (err) throw new Error("Unable to regenerate sessesion");
+                    res.status(201).send("Register successfully");
+                });
+            });
+        } catch (error: unknown) {
+            return res.status(501).send((error as Error).message);
         }
     }
 );
 
-// router.get("/test", express.urlencoded({ extended: false }), function (req: Request, res: Response) {
-//     return res.send(req.session.email);
-// });
+router.get("/test", express.urlencoded({ extended: false }), function (req: Request, res: Response) {
+    return res.send(req.session.userId);
+});
 
 export { router };

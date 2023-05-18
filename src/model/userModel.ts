@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model, HydratedDocument } from "mongoose";
+import { Schema, model, Document, Model, HydratedDocument, CallbackError } from "mongoose";
 import bcrypt from "bcrypt";
 
 export interface IUser extends Document {
@@ -24,11 +24,41 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         type: String,
         required: true,
         unique: true,
+        validate: {
+            validator: function (email: string) {
+                // Email validation logic
+                const emailRegex = /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$/;
+                return emailRegex.test(email);
+            },
+            message: "Invalid email address",
+        },
     },
     password: {
         type: String,
         required: true,
+        validate: {
+            validator: function (password: string) {
+                // Password validation logic
+                const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+
+                console.log(password, passwordRegex.test(password));
+                return passwordRegex.test(password);
+            },
+            message: "Invalid password format",
+        },
     },
+});
+
+UserSchema.pre<IUser>("save", async function (next) {
+    if (this.isModified("password")) {
+        try {
+            const hashedPassword = await bcrypt.hash(this.password, 10);
+            this.password = hashedPassword;
+        } catch (error) {
+            return next(error as CallbackError);
+        }
+    }
+    next();
 });
 
 UserSchema.statics.createUser = async function (
@@ -36,8 +66,7 @@ UserSchema.statics.createUser = async function (
     email: string,
     password: string
 ): Promise<HydratedDocument<IUser, IUserMethods>> {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new this({ name, email, password: hashedPassword });
+    const user = new this({ name, email, password });
     return await user.save();
 };
 
