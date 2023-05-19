@@ -34,7 +34,7 @@ router.post(
                 // save the session before redirection to ensure page
                 // load does not happen before session is saved
                 req.session.save(function (err) {
-                    if (err) throw new Error("Unable to regenerate sessesion");
+                    if (err) throw new Error("Unable to save session");
                     res.send("Login successfully");
                 });
             });
@@ -63,15 +63,10 @@ router.post(
 
             const newUser = await User.createUser(name, email, password);
 
-            req.session.regenerate(function (err) {
-                if (err) throw new Error("Unable to regenerate sessesion");
-
-                req.session.userId = newUser.id;
-
-                req.session.save(function (err) {
-                    if (err) throw new Error("Unable to regenerate sessesion");
-                    res.status(201).send("Register successfully");
-                });
+            req.session.userId = newUser.id;
+            req.session.save(function (err) {
+                if (err) throw new Error("Unable to save sessesion");
+                res.status(201).send("Register successfully");
             });
         } catch (error: unknown) {
             return res.status(501).send((error as Error).message);

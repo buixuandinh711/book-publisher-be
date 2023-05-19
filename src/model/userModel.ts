@@ -40,8 +40,6 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
             validator: function (password: string) {
                 // Password validation logic
                 const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-
-                console.log(password, passwordRegex.test(password));
                 return passwordRegex.test(password);
             },
             message: "Invalid password format",
