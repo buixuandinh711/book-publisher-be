@@ -5,7 +5,10 @@ const router = express.Router();
 router.post(
     "/login",
     express.urlencoded({ extended: false }),
-    async function (req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) {
+    async function (
+        req: Request<unknown, unknown, { email?: string; password?: string }>,
+        res: Response<{ name: string; email: string } | string>
+    ) {
         const { email, password } = req.body;
 
         if (email === undefined || password === undefined) {
@@ -35,7 +38,7 @@ router.post(
                 // load does not happen before session is saved
                 req.session.save(function (err) {
                     if (err) throw new Error("Unable to save session");
-                    res.send("Login successfully");
+                    res.send({ name: user.name, email: user.email });
                 });
             });
         } catch (error: unknown) {
@@ -47,7 +50,10 @@ router.post(
 router.post(
     "/register",
     express.urlencoded({ extended: false }),
-    async function (req: Request<unknown, unknown, Partial<IUser>>, res: Response) {
+    async function (
+        req: Request<unknown, unknown, Partial<IUser>>,
+        res: Response<{ name: string; email: string } | string>
+    ) {
         const { name, email, password } = req.body;
 
         if (name === undefined || email === undefined || password === undefined) {
@@ -66,7 +72,7 @@ router.post(
             req.session.userId = newUser.id;
             req.session.save(function (err) {
                 if (err) throw new Error("Unable to save sessesion");
-                res.status(201).send("Register successfully");
+                res.status(201).send({ name: newUser.name, email: newUser.email });
             });
         } catch (error: unknown) {
             return res.status(501).send((error as Error).message);
