@@ -80,8 +80,20 @@ router.post(
     }
 );
 
-router.get("/test", express.urlencoded({ extended: false }), function (req: Request, res: Response) {
-    return res.send(req.session.userId);
+router.get("/login-cookie", async function (req: Request, res: Response<{ name: string; email: string } | string>) {
+    const userId = req.session.userId;
+    if (userId === undefined) {
+        return res.status(401).send("Session not found");
+    }
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+        return res.send({ name: user.name, email: user.email });
+    } catch (error) {
+        return res.status(500).send("Undefined error");
+    }
 });
 
 export { router };

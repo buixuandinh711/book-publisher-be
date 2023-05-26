@@ -21,7 +21,7 @@ interface IBookMethods {
   toClient(imageWidth: number): IBook;
 }
 
-type BookModel = Model<IBook, {}, IBookMethods>;
+type BookModel = Model<IBook, unknown, IBookMethods>;
 
 const bookSchema = new Schema<IBook, BookModel, IBookMethods>({
   name: { type: String, required: true },
