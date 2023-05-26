@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { IUser, User } from "../model/userModel";
+import { auth } from "../middleware/auth";
 const router = express.Router();
 
 router.post(
@@ -80,20 +81,22 @@ router.post(
     }
 );
 
-router.get("/login-cookie", async function (req: Request, res: Response<{ name: string; email: string } | string>) {
-    const userId = req.session.userId;
-    if (userId === undefined) {
-        return res.status(401).send("Session not found");
-    }
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).send("User not found");
-        }
+router.get(
+    "/login-cookie",
+    auth,
+    async function (_: Request, res: Response<{ name: string; email: string } | string, { user: IUser }>) {
+        const user = res.locals.user;
         return res.send({ name: user.name, email: user.email });
-    } catch (error) {
-        return res.status(500).send("Undefined error");
     }
+);
+
+router.get("/logout", auth, async function (req: Request, res: Response<string, { user: IUser }>) {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).send("Failed to destroy session");
+        }
+        return res.send("Logged out");
+    });
 });
 
 export { router };
