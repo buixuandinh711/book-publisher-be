@@ -1,10 +1,16 @@
-import { Schema, model, Document, Model, HydratedDocument, CallbackError } from "mongoose";
+import { Schema, model, Document, Model, HydratedDocument, CallbackError, Types } from "mongoose";
 import bcrypt from "bcrypt";
+
+export interface ICartItem {
+    item: Types.ObjectId;
+    quantity: number;
+}
 
 export interface IUser extends Document {
     name: string;
     email: string;
     password: string;
+    cart: Types.DocumentArray<ICartItem>;
 }
 
 interface IUserMethods {
@@ -36,19 +42,26 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
     password: {
         type: String,
         required: true,
-        validate: {
-            validator: function (password: string) {
-                // Password validation logic
-                const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-                return passwordRegex.test(password);
-            },
-            message: "Invalid password format",
-        },
     },
+    cart: [
+        {
+            item: {
+                type: Schema.Types.ObjectId,
+                ref: "Book",
+            },
+            quantity: {
+                type: Number,
+            },
+        },
+    ],
 });
 
 UserSchema.pre<IUser>("save", async function (next) {
     if (this.isModified("password")) {
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
+        if (!passwordRegex.test(this.password)) {
+            next(new Error("Invalid password format"));
+        }
         try {
             const hashedPassword = await bcrypt.hash(this.password, 10);
             this.password = hashedPassword;

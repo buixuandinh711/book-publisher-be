@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
-import { IUser, User } from "../model/userModel";
+import { ICartItem, IUser, User } from "../model/userModel";
 import { auth } from "../middleware/auth";
+import { Book } from "../model/bookModel";
 const router = express.Router();
 
 router.post(
@@ -90,7 +91,7 @@ router.get(
     }
 );
 
-router.get("/logout", auth, async function (req: Request, res: Response<string, { user: IUser }>) {
+router.get("/logout", auth, async function (req: Request, res: Response) {
     req.session.destroy((err) => {
         if (err) {
             return res.status(500).send("Failed to destroy session");
@@ -98,5 +99,46 @@ router.get("/logout", auth, async function (req: Request, res: Response<string, 
         return res.send("Logged out");
     });
 });
+
+router.post(
+    "/update-cart",
+    auth,
+    express.json(),
+    async function (
+        req: Request<unknown, unknown, { cart?: Partial<ICartItem>[] }>,
+        res: Response<unknown, { user: IUser }>
+    ) {
+        const user = res.locals.user;
+        const cart = req.body.cart;
+        if (!cart) {
+            return res.status(400).send("Empty cart");
+        }
+        const validFields = cart.every(
+            (item) => item.item !== undefined && item.quantity !== undefined && item.quantity > 0
+        );
+
+        if (!validFields) {
+            return res.status(400).send("Invaid cart item");
+        }
+        const safeCart = cart as ICartItem[];
+
+        // check duplicate
+        const cartItems = safeCart.map((item) => item.item.toString());
+        const set = new Set(cartItems);
+        if (cartItems.length !== set.size) {
+            return res.status(400).send("Duplicate cart item");
+        }
+
+        const docs = await Book.find({ _id: { $in: cartItems } });
+        if (docs.length != cart.length) {
+            return res.status(400).send("Invalid cart item");
+        }
+
+        user.set("cart", safeCart);
+        await user.save();
+
+        res.send(await User.findById(user.id));
+    }
+);
 
 export { router };
