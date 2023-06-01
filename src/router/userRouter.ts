@@ -114,7 +114,7 @@ router.post(
             return res.status(400).send("Empty cart");
         }
         const validFields = cart.every(
-            (item) => item.item !== undefined && item.quantity !== undefined && item.quantity > 0
+            (item) => item.itemId !== undefined && item.quantity !== undefined && item.quantity > 0
         );
 
         if (!validFields) {
@@ -123,7 +123,7 @@ router.post(
         const safeCart = cart as ICartItem[];
 
         // check duplicate
-        const cartItems = safeCart.map((item) => item.item.toString());
+        const cartItems = safeCart.map((item) => item.itemId.toString());
         const set = new Set(cartItems);
         if (cartItems.length !== set.size) {
             return res.status(400).send("Duplicate cart item");
@@ -138,6 +138,36 @@ router.post(
         await user.save();
 
         res.send(await User.findById(user.id));
+    }
+);
+
+router.post(
+    "/add-to-cart",
+    auth,
+    express.json(),
+    async function (req: Request<unknown, unknown, { itemId?: string }>, res: Response<unknown, { user: IUser }>) {
+        const user = res.locals.user;
+        const itemId = req.body.itemId;
+        if (!itemId) {
+            return res.status(400).send("Item not specified");
+        }
+        try {
+            const book = await Book.findById(itemId);
+            if (!book) {
+                return res.status(400).send("Item not found");
+            }
+            const foundItem = user.cart.find((item) => item.itemId.toString() === itemId);
+            if (foundItem) {
+                foundItem.quantity++;
+            } else {
+                user.cart.push({ itemId: itemId, quantity: 1 });
+            }
+            await user.save();
+            res.send(await User.findById(user.id));
+        } catch (err) {
+            console.log(err);
+            return res.status(500).send("Unknown error");
+        }
     }
 );
 

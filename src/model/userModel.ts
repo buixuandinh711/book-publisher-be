@@ -2,7 +2,7 @@ import { Schema, model, Document, Model, HydratedDocument, CallbackError, Types 
 import bcrypt from "bcrypt";
 
 export interface ICartItem {
-    item: Types.ObjectId;
+    itemId: Types.ObjectId;
     quantity: number;
 }
 
@@ -45,7 +45,7 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
     },
     cart: [
         {
-            item: {
+            itemId: {
                 type: Schema.Types.ObjectId,
                 ref: "Book",
             },
