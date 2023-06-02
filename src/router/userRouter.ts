@@ -100,46 +100,10 @@ router.get("/logout", auth, async function (req: Request, res: Response) {
     });
 });
 
-router.post(
-    "/update-cart",
-    auth,
-    express.json(),
-    async function (
-        req: Request<unknown, unknown, { cart?: Partial<ICartItem>[] }>,
-        res: Response<unknown, { user: IUser }>
-    ) {
-        const user = res.locals.user;
-        const cart = req.body.cart;
-        if (!cart) {
-            return res.status(400).send("Empty cart");
-        }
-        const validFields = cart.every(
-            (item) => item.itemId !== undefined && item.quantity !== undefined && item.quantity > 0
-        );
-
-        if (!validFields) {
-            return res.status(400).send("Invaid cart item");
-        }
-        const safeCart = cart as ICartItem[];
-
-        // check duplicate
-        const cartItems = safeCart.map((item) => item.itemId.toString());
-        const set = new Set(cartItems);
-        if (cartItems.length !== set.size) {
-            return res.status(400).send("Duplicate cart item");
-        }
-
-        const docs = await Book.find({ _id: { $in: cartItems } });
-        if (docs.length != cart.length) {
-            return res.status(400).send("Invalid cart item");
-        }
-
-        user.set("cart", safeCart);
-        await user.save();
-
-        res.send(await User.findById(user.id));
-    }
-);
+router.get("/cart", auth, async function (req: Request, res: Response<unknown, { user: IUser }>) {
+    const user = res.locals.user;
+    res.send(user.cart);
+});
 
 router.post(
     "/add-to-cart",
@@ -163,6 +127,129 @@ router.post(
                 user.cart.push({ itemId: itemId, quantity: 1 });
             }
             await user.save();
+            res.send(await User.findById(user.id));
+        } catch (err) {
+            console.log(err);
+            return res.status(500).send("Unknown error");
+        }
+    }
+);
+
+router.post(
+    "/decrease-cart-item",
+    auth,
+    express.json(),
+    async function (req: Request<unknown, unknown, { itemId?: string }>, res: Response<unknown, { user: IUser }>) {
+        const user = res.locals.user;
+        const itemId = req.body.itemId;
+        if (!itemId) {
+            return res.status(400).send("Item not specified");
+        }
+        try {
+            const book = await Book.findById(itemId);
+            if (!book) {
+                return res.status(404).send("Item not found");
+            }
+
+            const foundItem = user.cart.find((item) => item.itemId.toString() === itemId);
+            if (!foundItem) {
+                return res.status(404).send("Item not in cart");
+            }
+
+            const newCart = user.cart
+                .map((item) => {
+                    if (item.itemId.toString() === itemId) {
+                        return {
+                            ...item,
+                            quantity: item.quantity > 0 ? item.quantity - 1 : 0,
+                        };
+                    }
+                    return item;
+                })
+                .filter((item) => item.quantity > 0);
+
+            user.set("cart", newCart);
+            await user.save();
+
+            res.send(await User.findById(user.id));
+        } catch (err) {
+            console.log(err);
+            return res.status(500).send("Unknown error");
+        }
+    }
+);
+
+router.post(
+    "/remove-cart-item",
+    auth,
+    express.json(),
+    async function (req: Request<unknown, unknown, { itemId?: string }>, res: Response<unknown, { user: IUser }>) {
+        const user = res.locals.user;
+        const itemId = req.body.itemId;
+        if (!itemId) {
+            return res.status(400).send("Item not specified");
+        }
+        try {
+            const book = await Book.findById(itemId);
+            if (!book) {
+                return res.status(404).send("Item not found");
+            }
+
+            const foundItem = user.cart.find((item) => item.itemId.toString() === itemId);
+            if (!foundItem) {
+                return res.status(404).send("Item not in cart");
+            }
+
+            const newCart = user.cart.filter((item) => item.itemId.toString() !== itemId);
+
+            user.set("cart", newCart);
+            await user.save();
+
+            res.send(await User.findById(user.id));
+        } catch (err) {
+            console.log(err);
+            return res.status(500).send("Unknown error");
+        }
+    }
+);
+
+router.post(
+    "/update-cart-item",
+    auth,
+    express.json(),
+    async function (
+        req: Request<unknown, unknown, { itemId?: string; quantity?: number }>,
+        res: Response<unknown, { user: IUser }>
+    ) {
+        const user = res.locals.user;
+        const { itemId, quantity } = req.body;
+        if (itemId === undefined || quantity === undefined) {
+            return res.status(400).send("Invalid request body");
+        }
+        if (quantity < 0 || quantity > 100) {
+            return res.status(400).send("Invalid quantity");
+        }
+        try {
+            const book = await Book.findById(itemId);
+            if (!book) {
+                return res.status(400).send("Item not found");
+            }
+
+            const newCart = user.cart
+                .map((item) => {
+                    if (item.itemId.toString() === itemId) {
+                        return {
+                            ...item,
+                            quantity,
+                        };
+                    }
+                    return item;
+                })
+                .filter((item) => item.quantity > 0);
+
+            user.set("cart", newCart);
+            await user.save();
+
             res.send(await User.findById(user.id));
         } catch (err) {
             console.log(err);

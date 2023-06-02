@@ -43,17 +43,28 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         type: String,
         required: true,
     },
-    cart: [
-        {
-            itemId: {
-                type: Schema.Types.ObjectId,
-                ref: "Book",
+    cart: {
+        type: [
+            {
+                itemId: {
+                    type: Schema.Types.ObjectId,
+                    ref: "Book",
+                },
+                quantity: {
+                    type: Number,
+                },
             },
-            quantity: {
-                type: Number,
-            },
-        },
-    ],
+        ],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        get: (v: any) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            v.map((item: any) => {
+                const obj = item.toObject();
+                delete obj._id;
+                return obj;
+            }),
+        getter: true,
+    },
 });
 
 UserSchema.pre<IUser>("save", async function (next) {
