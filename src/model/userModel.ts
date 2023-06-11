@@ -2,7 +2,7 @@ import { Schema, model, Document, Model, HydratedDocument, CallbackError, Types 
 import bcrypt from "bcrypt";
 
 export interface ICartItem {
-    itemId: Types.ObjectId;
+    book: Types.ObjectId;
     quantity: number;
 }
 
@@ -46,7 +46,7 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
     cart: {
         type: [
             {
-                itemId: {
+                book: {
                     type: Schema.Types.ObjectId,
                     ref: "Book",
                 },
@@ -56,14 +56,14 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
             },
         ],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        get: (v: any) =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            v.map((item: any) => {
-                const obj = item.toObject();
-                delete obj._id;
-                return obj;
-            }),
-        getter: true,
+        // get: (v: any) =>
+        //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        //     v.map((item: any) => {
+        //         const obj = item.toObject();
+        //         delete obj._id;
+        //         return obj;
+        //     }),
+        // getter: true,
     },
 });
 

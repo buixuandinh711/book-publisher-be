@@ -1,7 +1,8 @@
 import express, { Request, Response } from "express";
 import { ICartItem, IUser, User } from "../model/userModel";
 import { auth } from "../middleware/auth";
-import { Book } from "../model/bookModel";
+import { Book, BookModel, IBook } from "../model/bookModel";
+import { HydratedDocument } from "mongoose";
 const router = express.Router();
 
 router.post(
@@ -102,7 +103,31 @@ router.get("/logout", auth, async function (req: Request, res: Response) {
 
 router.get("/cart", auth, async function (req: Request, res: Response<unknown, { user: IUser }>) {
     const user = res.locals.user;
-    res.send(user.cart);
+    try {
+        const result = await user.populate<{ cart: { book: HydratedDocument<IBook>; quantity: number }[] }>(
+            "cart.book"
+        );
+        if (!result) {
+            return res.status(404).send("Failed to get cart");
+        }
+        return res.send(
+            result.cart.map((item) => {
+                // replace and remove unused fields
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const obj = item.book.toObject() as any;
+                obj.id = obj._id.toString();
+                delete obj._id;
+                delete obj.__v;
+
+                return {
+                    book: obj,
+                    quantity: item.quantity,
+                };
+            })
+        );
+    } catch (error) {
+        return res.status(500);
+    }
 });
 
 router.post(
@@ -120,13 +145,13 @@ router.post(
             if (!book) {
                 return res.status(400).send("Item not found");
             }
-            const foundItem = user.cart.find((item) => item.itemId.toString() === itemId);
+            const foundItem = user.cart.find((item) => item.book.toString() === itemId);
             if (foundItem) {
                 foundItem.quantity++;
             } else {
-                user.cart.push({ itemId: itemId, quantity: 1 });
+                user.cart.push({ book: itemId, quantity: 1 });
             }
-            await user.save();
+            console.log(await user.save());
             res.send(await User.findById(user.id));
         } catch (err) {
             console.log(err);
@@ -151,14 +176,14 @@ router.post(
                 return res.status(404).send("Item not found");
             }
 
-            const foundItem = user.cart.find((item) => item.itemId.toString() === itemId);
+            const foundItem = user.cart.find((item) => item.book.toString() === itemId);
             if (!foundItem) {
                 return res.status(404).send("Item not in cart");
             }
 
             const newCart = user.cart
                 .map((item) => {
-                    if (item.itemId.toString() === itemId) {
+                    if (item.book.toString() === itemId) {
                         return {
                             ...item,
                             quantity: item.quantity > 0 ? item.quantity - 1 : 0,
@@ -195,12 +220,12 @@ router.post(
                 return res.status(404).send("Item not found");
             }
 
-            const foundItem = user.cart.find((item) => item.itemId.toString() === itemId);
+            const foundItem = user.cart.find((item) => item.book.toString() === itemId);
             if (!foundItem) {
                 return res.status(404).send("Item not in cart");
             }
 
-            const newCart = user.cart.filter((item) => item.itemId.toString() !== itemId);
+            const newCart = user.cart.filter((item) => item.book.toString() !== itemId);
 
             user.set("cart", newCart);
             await user.save();
@@ -237,7 +262,7 @@ router.post(
 
             const newCart = user.cart
                 .map((item) => {
-                    if (item.itemId.toString() === itemId) {
+                    if (item.book.toString() === itemId) {
                         return {
                             ...item,
                             quantity,
