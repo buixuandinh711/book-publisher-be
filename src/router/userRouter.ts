@@ -153,7 +153,7 @@ router.post(
             } else {
                 user.cart.push({ book: itemId, quantity: 1 });
             }
-            console.log(await user.save());
+            await user.save();
             res.send(await User.findById(user.id));
         } catch (err) {
             console.log(err);
