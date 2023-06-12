@@ -6,7 +6,7 @@ export const getAllBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find()
-        .select("_id name image originalPrice discountPrice discountPercent")
+        .select("_id name image originalPrice discountPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -27,7 +27,7 @@ export const getNewBooks = async (
     const currentYear = new Date().getFullYear();
 
     const books = await Book.find({ publicationYear: currentYear })
-        .select("_id name image originalPrice discountPrice discountPercent")
+        .select("_id name image originalPrice discountPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -46,7 +46,7 @@ export const getClassicBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find({ category: "Văn học kinh điển" })
-        .select("_id name image originalPrice discountPrice discountPercent")
+        .select("_id name image originalPrice discountPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -65,7 +65,7 @@ export const getDiscountBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find({ discountPercent: { $gt: 0 } })
-        .select("_id name image originalPrice discountPrice discountPercent")
+        .select("_id name image originalPrice discountPrice currentPrice")
         .sort({ discountPercent: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
@@ -85,7 +85,7 @@ export const getPopularBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find({})
-        .select("_id name image originalPrice discountPrice discountPercent")
+        .select("_id name image originalPrice discountPrice currentPrice")
         .sort({ discountPercent: -1 })
         .skip((page - 1) * limit)
         .limit(limit);

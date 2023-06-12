@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
-import { ICartItem, IUser, User } from "../model/userModel";
+import { IUser, User } from "../model/userModel";
 import { auth } from "../middleware/auth";
-import { Book, BookModel, IBook } from "../model/bookModel";
+import { Book, IBook } from "../model/bookModel";
 import { HydratedDocument } from "mongoose";
 const router = express.Router();
 
@@ -111,19 +111,21 @@ router.get("/cart", auth, async function (req: Request, res: Response<unknown, {
             return res.status(404).send("Failed to get cart");
         }
         return res.send(
-            result.cart.map((item) => {
-                // replace and remove unused fields
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const obj = item.book.toObject() as any;
-                obj.id = obj._id.toString();
-                delete obj._id;
-                delete obj.__v;
+            result.cart
+                .filter((item) => item.book !== undefined)
+                .map((item) => {
+                    // replace and remove unused fields
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const obj = item.book.toObject() as any;
+                    obj.id = obj._id.toString();
+                    delete obj._id;
+                    delete obj.__v;
 
-                return {
-                    book: obj,
-                    quantity: item.quantity,
-                };
-            })
+                    return {
+                        book: obj,
+                        quantity: item.quantity,
+                    };
+                })
         );
     } catch (error) {
         return res.status(500);

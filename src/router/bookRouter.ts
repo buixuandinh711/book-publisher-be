@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
-import { Book, IBook } from "../model/bookModel";
-import { DEFAULT_PAGE_LIMIT, ImageSize } from "../utils/const";
+import { IBook } from "../model/bookModel";
+import { DEFAULT_PAGE_LIMIT } from "../utils/const";
 import { PaginatedResult, QueryParams } from "../utils/type";
 import {
     countBooksInCategories,
@@ -14,60 +14,72 @@ import {
 } from "../service/bookService";
 const router = express.Router();
 
-router.get("/", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
+router.get("/", async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
     const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
 
     try {
         const result = await getAllBooks({ page, limit });
         return res.status(200).json(result);
-    } catch (error: any) {
-        return res.status(501).send(error.message);
+    } catch (_) {
+        return res.status(501).send();
     }
 });
 
-router.get("/new", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
-    const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
+router.get(
+    "/new",
+    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
+        const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
 
-    try {
-        const result = await getNewBooks({ page, limit });
-        return res.status(200).json(result);
-    } catch (error: any) {
-        return res.status(501).send(error.message);
+        try {
+            const result = await getNewBooks({ page, limit });
+            return res.status(200).json(result);
+        } catch (_) {
+            return res.status(501).send();
+        }
     }
-});
+);
 
-router.get("/classic", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
-    const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
+router.get(
+    "/classic",
+    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
+        const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
 
-    try {
-        const result = await getClassicBooks({ page, limit });
-        return res.status(200).json(result);
-    } catch (error: any) {
-        return res.status(501).send(error.message);
+        try {
+            const result = await getClassicBooks({ page, limit });
+            return res.status(200).json(result);
+        } catch (_) {
+            return res.status(501).send();
+        }
     }
-});
+);
 
-router.get("/discount", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
-    const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
+router.get(
+    "/discount",
+    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
+        const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
 
-    try {
-        const result = await getDiscountBooks({ page, limit });
-        return res.status(200).json(result);
-    } catch (error: any) {
-        return res.status(501).send(error.message);
+        try {
+            const result = await getDiscountBooks({ page, limit });
+            return res.status(200).json(result);
+        } catch (_) {
+            return res.status(501).send();
+        }
     }
-});
+);
 
-router.get("/popular", async (req: Request<{}, {}, {}, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
-    const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
+router.get(
+    "/popular",
+    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook>>) => {
+        const { page = 1, limit = DEFAULT_PAGE_LIMIT } = req.query;
 
-    try {
-        const result = await getPopularBooks({ page, limit });
-        return res.status(200).json(result);
-    } catch (error: any) {
-        return res.status(501).send(error.message);
+        try {
+            const result = await getPopularBooks({ page, limit });
+            return res.status(200).json(result);
+        } catch (_) {
+            return res.status(501).send();
+        }
     }
-});
+);
 
 router.get(
     "/home",
@@ -99,35 +111,38 @@ router.get(
                 discountBooks: discountBooks.results,
                 popularBooks: popularBooks.results,
             });
-        } catch (error: any) {
-            return res.status(501).send(error.message);
+        } catch (_) {
+            return res.status(501).send();
         }
     }
 );
 
-router.get("/detail/:id", async (req: Request<{ id: string }, {}, {}, QueryParams>, res: Response<IBook | string>) => {
-    const { id } = req.params;
+router.get(
+    "/detail/:id",
+    async (req: Request<{ id: string }, unknown, unknown, QueryParams>, res: Response<IBook | string>) => {
+        const { id } = req.params;
 
-    try {
-        const book = await getBookById(id);
-        if (book === null) {
-            return res.status(404).send(`Book with id '${id}' not found`);
+        try {
+            const book = await getBookById(id);
+            if (book === null) {
+                return res.status(404).send(`Book with id '${id}' not found`);
+            }
+            return res.status(200).json(book);
+        } catch (_) {
+            return res.status(501).send();
         }
-        return res.status(200).json(book);
-    } catch (error: any) {
-        return res.status(501).send(error.message);
     }
-});
+);
 
 router.get(
     "/relate/:id",
-    async (req: Request<{ id: string }, {}, {}, QueryParams>, res: Response<IBook[] | string>) => {
+    async (req: Request<{ id: string }, unknown, unknown, QueryParams>, res: Response<IBook[] | string>) => {
         try {
             const { id } = req.params;
             const relatedBooks = await getRelatedBooks(id);
             return res.status(200).json(relatedBooks);
-        } catch (error: any) {
-            return res.status(501).send(error.message);
+        } catch (_) {
+            return res.status(501).send();
         }
     }
 );
@@ -146,8 +161,8 @@ router.get(
         try {
             const bookCount = await countBooksInCategories();
             return res.status(200).json(bookCount);
-        } catch (error: any) {
-            return res.status(501).send(error.message);
+        } catch (_) {
+            return res.status(501).send();
         }
     }
 );
