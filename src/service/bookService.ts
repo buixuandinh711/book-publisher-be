@@ -6,7 +6,7 @@ export const getAllBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find()
-        .select("_id name image originalPrice discountPrice currentPrice")
+        .select("_id name image originalPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -27,7 +27,7 @@ export const getNewBooks = async (
     const currentYear = new Date().getFullYear();
 
     const books = await Book.find({ publicationYear: currentYear })
-        .select("_id name image originalPrice discountPrice currentPrice")
+        .select("_id name image originalPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -46,7 +46,7 @@ export const getClassicBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find({ category: "Văn học kinh điển" })
-        .select("_id name image originalPrice discountPrice currentPrice")
+        .select("_id name image originalPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
@@ -64,18 +64,38 @@ export const getClassicBooks = async (
 export const getDiscountBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
-    const books = await Book.find({ discountPercent: { $gt: 0 } })
-        .select("_id name image originalPrice discountPrice currentPrice")
-        .sort({ discountPercent: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
-
-    const count = await Book.countDocuments({ discountPercent: { $gt: 0 } });
-
-    const transformedBooks: IBook[] = books.map((book) => book.toClient(ImageSize.Small));
-
+    const discountBooks = await Book.aggregate([
+        {
+            $addFields: {
+                priceDifference: {
+                    $divide: [{ $subtract: ["$originalPrice", "$currentPrice"] }, "$originalPrice"],
+                },
+            },
+        },
+        {
+            $sort: {
+                priceDifference: -1, // Sort in descending order
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                image: 1,
+                originalPrice: 1,
+                currentPrice: 1,
+            },
+        },
+        {
+            $skip: (page - 1) * limit,
+        },
+        {
+            $limit: limit,
+        },
+    ]);
+    const count = await Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
     return {
-        results: transformedBooks,
+        results: discountBooks,
         currentPage: page,
         totalPages: Math.ceil(count / limit),
     };
@@ -85,7 +105,7 @@ export const getPopularBooks = async (
     { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
 ): Promise<PaginatedResult<IBook>> => {
     const books = await Book.find({})
-        .select("_id name image originalPrice discountPrice currentPrice")
+        .select("_id name image originalPrice currentPrice")
         .sort({ discountPercent: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
