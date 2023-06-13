@@ -136,11 +136,18 @@ router.post(
     "/add-to-cart",
     auth,
     express.json(),
-    async function (req: Request<unknown, unknown, { itemId?: string }>, res: Response<unknown, { user: IUser }>) {
+    async function (
+        req: Request<unknown, unknown, { itemId?: string; amount?: number }>,
+        res: Response<unknown, { user: IUser }>
+    ) {
         const user = res.locals.user;
         const itemId = req.body.itemId;
         if (!itemId) {
             return res.status(400).send("Item not specified");
+        }
+        let amount = req.body.amount;
+        if (!amount) {
+            amount = 1;
         }
         try {
             const book = await Book.findById(itemId);
@@ -149,9 +156,9 @@ router.post(
             }
             const foundItem = user.cart.find((item) => item.book.toString() === itemId);
             if (foundItem) {
-                foundItem.quantity++;
+                foundItem.quantity += amount;
             } else {
-                user.cart.push({ book: itemId, quantity: 1 });
+                user.cart.push({ book: itemId, quantity: amount });
             }
             await user.save();
             res.send();

@@ -10,7 +10,7 @@ export interface IBook {
     category: string;
     author: string;
     publicationYear: number;
-    dimemsions: string;
+    dimensions: string;
     numPages: number;
     coverType: string;
     description: string;
@@ -31,7 +31,7 @@ const bookSchema = new Schema<IBook, BookModel, IBookMethods>({
     category: { type: String, required: true },
     author: { type: String, required: true },
     publicationYear: { type: Number, required: false, min: [1800, "Too small year"], max: [2023, "Too large year"] },
-    dimemsions: { type: String, required: false },
+    dimensions: { type: String, required: false },
     numPages: { type: Number, required: false, min: [1, "Too few pages"], max: [10000, "Too many pages"] },
     coverType: { type: String, required: false },
     description: { type: String, required: false },
