@@ -94,8 +94,19 @@ export const getDiscountBooks = async (
         },
     ]);
     const count = await Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
+
+    const transformedBooks: IBook[] = discountBooks.map((book) => {
+        book.id = book._id.toString();
+        delete book._id;
+        delete book.__v;
+
+        // resize image
+        book.image = book.image.replace("/image/upload/", `/image/upload/w_${ImageSize.Small}/`);
+
+        return book;
+    });
     return {
-        results: discountBooks,
+        results: transformedBooks,
         currentPage: page,
         totalPages: Math.ceil(count / limit),
     };

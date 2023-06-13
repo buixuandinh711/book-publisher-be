@@ -154,7 +154,7 @@ router.post(
                 user.cart.push({ book: itemId, quantity: 1 });
             }
             await user.save();
-            res.send(await User.findById(user.id));
+            res.send();
         } catch (err) {
             console.log(err);
             return res.status(500).send("Unknown error");
@@ -197,8 +197,7 @@ router.post(
 
             user.set("cart", newCart);
             await user.save();
-
-            res.send(await User.findById(user.id));
+            res.send();
         } catch (err) {
             console.log(err);
             return res.status(500).send("Unknown error");
@@ -276,8 +275,7 @@ router.post(
 
             user.set("cart", newCart);
             await user.save();
-
-            res.send(await User.findById(user.id));
+            res.send();
         } catch (err) {
             console.log(err);
             return res.status(500).send("Unknown error");
