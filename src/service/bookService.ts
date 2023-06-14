@@ -1,57 +1,70 @@
 import { Book, IBook } from "../model/bookModel";
-import { DEFAULT_PAGE_LIMIT, ImageSize } from "../utils/const";
-import { PaginatedResult, QueryParams } from "../utils/type";
+import { ImageSize } from "../utils/const";
+import { PaginatedResult } from "../utils/type";
 
-export const getAllBooks = async (
-    { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
-): Promise<PaginatedResult<IBook>> => {
+export class PageTooLarge extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "PageTooLarge";
+    }
+}
+
+export const getAllBooks = async (page: number, limit: number): Promise<PaginatedResult<IBook>> => {
+    const count = await Book.countDocuments();
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+        throw new PageTooLarge("Page number greater than total pages");
+    }
+
     const books = await Book.find()
         .select("_id name image originalPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
-
-    const count = await Book.countDocuments();
 
     const transformedBooks: IBook[] = books.map((book) => book.toClient(ImageSize.Small));
 
     return {
         results: transformedBooks,
         currentPage: page,
-        totalPages: Math.ceil(count / limit),
+        totalPages,
     };
 };
 
-export const getNewBooks = async (
-    { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
-): Promise<PaginatedResult<IBook>> => {
+export const getNewBooks = async (page: number, limit: number): Promise<PaginatedResult<IBook>> => {
     const currentYear = new Date().getFullYear();
+
+    const count = await Book.countDocuments({ publicationYear: currentYear });
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+        throw new PageTooLarge("Page number greater than total pages");
+    }
 
     const books = await Book.find({ publicationYear: currentYear })
         .select("_id name image originalPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
-    const count = await Book.countDocuments({ publicationYear: currentYear });
-
     const transformedBooks: IBook[] = books.map((book) => book.toClient(ImageSize.Small));
 
     return {
         results: transformedBooks,
         currentPage: page,
-        totalPages: Math.ceil(count / limit),
+        totalPages,
     };
 };
 
-export const getClassicBooks = async (
-    { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
-): Promise<PaginatedResult<IBook>> => {
+export const getClassicBooks = async (page: number, limit: number): Promise<PaginatedResult<IBook>> => {
+    const count = await Book.countDocuments({ category: "Văn học kinh điển" });
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+        throw new PageTooLarge("Page number greater than total pages");
+    }
+
     const books = await Book.find({ category: "Văn học kinh điển" })
         .select("_id name image originalPrice currentPrice")
         .skip((page - 1) * limit)
         .limit(limit);
 
-    const count = await Book.countDocuments({ category: "Văn học kinh điển" });
-
     const transformedBooks: IBook[] = books.map((book) => book.toClient(ImageSize.Small));
 
     return {
@@ -61,9 +74,13 @@ export const getClassicBooks = async (
     };
 };
 
-export const getDiscountBooks = async (
-    { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
-): Promise<PaginatedResult<IBook>> => {
+export const getDiscountBooks = async (page: number, limit: number): Promise<PaginatedResult<IBook>> => {
+    const count = await Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+        throw new PageTooLarge("Page number greater than total pages");
+    }
+
     const discountBooks = await Book.aggregate([
         {
             $addFields: {
@@ -93,7 +110,6 @@ export const getDiscountBooks = async (
             $limit: limit,
         },
     ]);
-    const count = await Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
 
     const transformedBooks: IBook[] = discountBooks.map((book) => {
         book.id = book._id.toString();
@@ -112,16 +128,18 @@ export const getDiscountBooks = async (
     };
 };
 
-export const getPopularBooks = async (
-    { page, limit }: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT }
-): Promise<PaginatedResult<IBook>> => {
+export const getPopularBooks = async (page: number, limit: number): Promise<PaginatedResult<IBook>> => {
+    const count = await Book.countDocuments({});
+    const totalPages = Math.ceil(count / limit);
+    if (page > totalPages) {
+        throw new PageTooLarge("Page number greater than total pages");
+    }
+
     const books = await Book.find({})
         .select("_id name image originalPrice currentPrice")
         .sort({ discountPercent: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
-
-    const count = await Book.countDocuments({});
 
     const transformedBooks: IBook[] = books.map((book) => book.toClient(ImageSize.Small));
 
@@ -163,7 +181,7 @@ export const getBookById = async (id: string): Promise<IBook | null> => {
 export const countBooksInCategories = async () => {
     const newBooksPromise = Book.countDocuments({ publicationYear: new Date().getFullYear() });
     const classicBooksPromise = Book.countDocuments({ category: "Văn học kinh điển" });
-    const discountBooksPromise = Book.countDocuments({ discountPercent: { $gt: 0 } });
+    const discountBooksPromise = Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
     const popularBooksPromise = Book.countDocuments({});
 
     const [newBooksCount, classicBooksCount, discountBooksCount, popularBooksCount] = await Promise.all([
