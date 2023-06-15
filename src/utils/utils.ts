@@ -1,34 +1,62 @@
 import { DEFAULT_PAGE_LIMIT } from "./const";
-import { QueryParams } from "./type";
+import { Result, Ok, Err } from "./result";
+import { QueryParams, ReqQueryParams } from "./type";
 
-export class ValidateAndExtractError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "ValidateAndExtractError";
-    }
-}
+const safeCastUint = (value: unknown): Result<number, Error> => {
+    const result = Number(value);
 
-export const validateAndExtractQuery = (query: QueryParams) => {
-    let page = query.page;
-    if (page === undefined) {
-        page = 1;
+    if (isNaN(result) || !Number.isSafeInteger(result) || result < 0) {
+        return Err(new Error("Invalid unsigned integer value"));
     }
 
-    let limit = query.limit;
-    if (limit === undefined) {
-        limit = DEFAULT_PAGE_LIMIT;
+    return Ok(result);
+};
+
+export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryParams, Error> => {
+    const queryParams: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT };
+    if (query.page !== undefined) {
+        const pageResult = safeCastUint(query.page);
+        if (!pageResult.ok) {
+            return Err(pageResult.error);
+        }
+        queryParams.page = pageResult.data;
     }
 
-    if (page < 1) {
-        throw new ValidateAndExtractError("Invalid page number");
+    if (query.limit !== undefined) {
+        const limitResult = safeCastUint(query.limit);
+        if (!limitResult.ok) {
+            return Err(limitResult.error);
+        }
+        queryParams.limit = limitResult.data;
     }
 
-    if (limit < 1 || limit > 100) {
-        throw new ValidateAndExtractError("Invalid page limit");
+    if (queryParams.limit > 100) {
+        return Err(new Error("Page limit too large"));
     }
 
-    return {
-        page,
-        limit,
-    };
+    if (query["min-price"] !== undefined) {
+        const minPriceResult = safeCastUint(query["min-price"]);
+        if (!minPriceResult.ok) {
+            return Err(minPriceResult.error);
+        }
+        queryParams.minPrice = minPriceResult.data;
+    }
+
+    if (query["max-price"] !== undefined) {
+        const maxPriceResult = safeCastUint(query["max-price"]);
+        if (!maxPriceResult.ok) {
+            return Err(maxPriceResult.error);
+        }
+        queryParams.maxPrice = maxPriceResult.data;
+    }
+
+    if (
+        queryParams.minPrice !== undefined &&
+        queryParams.maxPrice !== undefined &&
+        queryParams.minPrice > queryParams.maxPrice
+    ) {
+        return Err(new Error("minPrice greater than maxPrice"));
+    }
+
+    return Ok(queryParams);
 };

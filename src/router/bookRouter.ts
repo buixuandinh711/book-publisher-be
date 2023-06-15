@@ -1,8 +1,9 @@
 import express, { Request, Response } from "express";
 import { IBook } from "../model/bookModel";
 import { DEFAULT_PAGE_LIMIT } from "../utils/const";
-import { PaginatedResult, QueryParams } from "../utils/type";
+import { PaginatedResult, ReqQueryParams } from "../utils/type";
 import {
+    BookNotFound,
     PageTooLarge,
     countBooksInCategories,
     getAllBooks,
@@ -13,114 +14,122 @@ import {
     getPopularBooks,
     getRelatedBooks,
 } from "../service/bookService";
-import { ValidateAndExtractError, validateAndExtractQuery } from "../utils/utils";
+import { validateAndExtractQuery } from "../utils/utils";
+import { Err, Ok } from "../utils/result";
+import { isValidObjectId } from "mongoose";
 const router = express.Router();
 
 router.get(
     "/",
-    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
-        try {
-            const { page, limit } = validateAndExtractQuery(req.query);
-            const result = await getAllBooks(page, limit);
-            return res.status(200).json(result);
-        } catch (err) {
-            console.log(err);
-            if (err instanceof ValidateAndExtractError) {
-                return res.status(400).send(err.message);
+    async (req: Request<unknown, unknown, unknown, ReqQueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
+        const queryResult = validateAndExtractQuery(req.query);
+
+        if (queryResult.ok) {
+            const result = await getAllBooks(queryResult.data);
+            if (result.ok) {
+                return res.status(200).json(result.data);
             }
-            if (err instanceof PageTooLarge) {
-                return res.status(400).send(err.message);
+            const error = result.error;
+            if (error instanceof PageTooLarge) {
+                return res.status(400).send(error.message);
             }
-            return res.status(501).send();
+            return res.status(500).send(error.message);
+        } else {
+            const error = queryResult.error;
+            console.log(error);
+            return res.status(400).send(error.message);
         }
     }
 );
 
 router.get(
     "/new",
-    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
-        try {
-            const { page, limit } = validateAndExtractQuery(req.query);
-            const result = await getNewBooks(page, limit);
-            return res.status(200).json(result);
-        } catch (err) {
-            console.log(err);
-            if (err instanceof ValidateAndExtractError) {
-                return res.status(400).send(err.message);
+    async (req: Request<unknown, unknown, unknown, ReqQueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
+        const queryResult = validateAndExtractQuery(req.query);
+
+        if (queryResult.ok) {
+            const result = await getNewBooks(queryResult.data);
+            if (result.ok) {
+                return res.status(200).json(result.data);
             }
-            if (err instanceof PageTooLarge) {
-                return res.status(400).send(err.message);
+            const error = result.error;
+            if (error instanceof PageTooLarge) {
+                return res.status(400).send(error.message);
             }
-            return res.status(501).send();
+            return res.status(500).send(error.message);
+        } else {
+            const error = queryResult.error;
+            console.log(error);
+            return res.status(400).send(error.message);
         }
     }
 );
 
 router.get(
     "/classic",
-    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
-        try {
-            const { page, limit } = validateAndExtractQuery(req.query);
-            const result = await getClassicBooks(page, limit);
-            if (result === null) {
-                return res.status(404).send();
+    async (req: Request<unknown, unknown, unknown, ReqQueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
+        const queryResult = validateAndExtractQuery(req.query);
+
+        if (queryResult.ok) {
+            const result = await getClassicBooks(queryResult.data);
+            if (result.ok) {
+                return res.status(200).json(result.data);
             }
-            return res.status(200).json(result);
-        } catch (err) {
-            console.log(err);
-            if (err instanceof ValidateAndExtractError) {
-                return res.status(400).send(err.message);
+            const error = result.error;
+            if (error instanceof PageTooLarge) {
+                return res.status(400).send(error.message);
             }
-            if (err instanceof PageTooLarge) {
-                return res.status(400).send(err.message);
-            }
-            return res.status(501).send();
+            return res.status(500).send(error.message);
+        } else {
+            const error = queryResult.error;
+            console.log(error);
+            return res.status(400).send(error.message);
         }
     }
 );
 
 router.get(
     "/discount",
-    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
-        try {
-            const { page, limit } = validateAndExtractQuery(req.query);
-            const result = await getDiscountBooks(page, limit);
-            if (result === null) {
-                return res.status(404).send();
+    async (req: Request<unknown, unknown, unknown, ReqQueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
+        const queryResult = validateAndExtractQuery(req.query);
+
+        if (queryResult.ok) {
+            const result = await getDiscountBooks(queryResult.data);
+            if (result.ok) {
+                return res.status(200).json(result.data);
             }
-            return res.status(200).json(result);
-        } catch (err) {
-            console.log(err);
-            if (err instanceof ValidateAndExtractError) {
-                return res.status(400).send(err.message);
+            const error = result.error;
+            if (error instanceof PageTooLarge) {
+                return res.status(400).send(error.message);
             }
-            if (err instanceof PageTooLarge) {
-                return res.status(400).send(err.message);
-            }
-            return res.status(501).send();
+            return res.status(500).send(error.message);
+        } else {
+            const error = queryResult.error;
+            console.log(error);
+            return res.status(400).send(error.message);
         }
     }
 );
 
 router.get(
     "/popular",
-    async (req: Request<unknown, unknown, unknown, QueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
-        try {
-            const { page, limit } = validateAndExtractQuery(req.query);
-            const result = await getPopularBooks(page, limit);
-            if (result === null) {
-                return res.status(404).send();
+    async (req: Request<unknown, unknown, unknown, ReqQueryParams>, res: Response<PaginatedResult<IBook> | string>) => {
+        const queryResult = validateAndExtractQuery(req.query);
+
+        if (queryResult.ok) {
+            const result = await getPopularBooks(queryResult.data);
+            if (result.ok) {
+                return res.status(200).json(result.data);
             }
-            return res.status(200).json(result);
-        } catch (err) {
-            console.log(err);
-            if (err instanceof ValidateAndExtractError) {
-                return res.status(400).send(err.message);
+            const error = result.error;
+            if (error instanceof PageTooLarge) {
+                return res.status(400).send(error.message);
             }
-            if (err instanceof PageTooLarge) {
-                return res.status(400).send(err.message);
-            }
-            return res.status(501).send();
+            return res.status(500).send(error.message);
+        } else {
+            const error = queryResult.error;
+            console.log(error);
+            return res.status(400).send(error.message);
         }
     }
 );
@@ -129,20 +138,23 @@ router.get(
     "/home",
     async (
         _,
-        res: Response<{
-            newBooks: IBook[];
-            classicBooks: IBook[];
-            discountBooks: IBook[];
-            popularBooks: IBook[];
-        }>
+        res: Response<
+            | {
+                  newBooks: IBook[];
+                  classicBooks: IBook[];
+                  discountBooks: IBook[];
+                  popularBooks: IBook[];
+              }
+            | string
+        >
     ) => {
         const page = 1;
         const limit = DEFAULT_PAGE_LIMIT;
         try {
-            const newBooksPromise = getNewBooks(page, limit);
-            const classicBooksPromise = getClassicBooks(page, limit);
-            const discountBooksPromise = getDiscountBooks(page, limit);
-            const popularBooksPromise = getPopularBooks(page, limit);
+            const newBooksPromise = getNewBooks({ page, limit });
+            const classicBooksPromise = getClassicBooks({ page, limit });
+            const discountBooksPromise = getDiscountBooks({ page, limit });
+            const popularBooksPromise = getPopularBooks({ page, limit });
 
             const results = await Promise.all([
                 newBooksPromise,
@@ -151,11 +163,14 @@ router.get(
                 popularBooksPromise,
             ]);
 
-            if (results.some((item) => item === null)) {
-                return res.status(404).send();
+            const foundErr = results.find((result) => !result.ok) as Err;
+            if (foundErr) {
+                return res.status(500).send(foundErr.error.message);
             }
 
-            const [newBooks, classicBooks, discountBooks, popularBooks] = results as PaginatedResult<IBook>[];
+            const unwrapResults = results.map((results) => (results as Ok<PaginatedResult<IBook>>).data);
+
+            const [newBooks, classicBooks, discountBooks, popularBooks] = unwrapResults;
 
             res.status(200).json({
                 newBooks: newBooks.results,
@@ -164,38 +179,48 @@ router.get(
                 popularBooks: popularBooks.results,
             });
         } catch (_) {
-            return res.status(501).send();
+            return res.status(500).send();
         }
     }
 );
 
 router.get(
     "/detail/:id",
-    async (req: Request<{ id: string }, unknown, unknown, QueryParams>, res: Response<IBook | string>) => {
+    async (req: Request<{ id?: string }, unknown, unknown, ReqQueryParams>, res: Response<IBook | string>) => {
         const { id } = req.params;
-
-        try {
-            const book = await getBookById(id);
-            if (book === null) {
-                return res.status(404).send(`Book with id '${id}' not found`);
-            }
-            return res.status(200).json(book);
-        } catch (_) {
-            return res.status(501).send();
+        if (id === undefined || !isValidObjectId(id)) {
+            return res.status(400).send("Invalid book id");
         }
+        const result = await getBookById(id);
+        if (!result.ok) {
+            const error = result.error;
+            res.status(500);
+            if (error instanceof BookNotFound) {
+                res.status(404);
+            }
+            return res.send(result.error.message);
+        }
+        return res.send(result.data);
     }
 );
 
 router.get(
     "/relate/:id",
-    async (req: Request<{ id: string }, unknown, unknown, QueryParams>, res: Response<IBook[] | string>) => {
-        try {
-            const { id } = req.params;
-            const relatedBooks = await getRelatedBooks(id);
-            return res.status(200).json(relatedBooks);
-        } catch (_) {
-            return res.status(501).send();
+    async (req: Request<{ id: string }, unknown, unknown, ReqQueryParams>, res: Response<IBook[] | string>) => {
+        const { id } = req.params;
+        if (id === undefined || !isValidObjectId(id)) {
+            return res.status(400).send("Invalid book id");
         }
+        const result = await getRelatedBooks(id);
+        if (!result.ok) {
+            const error = result.error;
+            res.status(500);
+            if (error instanceof BookNotFound) {
+                res.status(404);
+            }
+            return res.send(result.error.message);
+        }
+        return res.send(result.data);
     }
 );
 
@@ -203,19 +228,21 @@ router.get(
     "/category-count",
     async (
         _,
-        res: Response<{
-            newBooksCount: number;
-            classicBooksCount: number;
-            discountBooksCount: number;
-            popularBooksCount: number;
-        }>
+        res: Response<
+            | {
+                  newBooksCount: number;
+                  classicBooksCount: number;
+                  discountBooksCount: number;
+                  popularBooksCount: number;
+              }
+            | string
+        >
     ) => {
-        try {
-            const bookCount = await countBooksInCategories();
-            return res.status(200).json(bookCount);
-        } catch (_) {
-            return res.status(501).send();
+        const result = await countBooksInCategories();
+        if (!result.ok) {
+            return res.status(500).send(result.error.message);
         }
+        return res.json(result.data);
     }
 );
 

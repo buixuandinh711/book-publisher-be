@@ -16,7 +16,7 @@ export interface IBook {
     description: string;
 }
 
-interface IBookMethods {
+export interface IBookMethods {
     toClient(imageWidth: number): IBook;
 }
 

@@ -45,7 +45,7 @@ router.post(
                 });
             });
         } catch (error: unknown) {
-            return res.status(501).send();
+            return res.status(500).send();
         }
     }
 );
@@ -78,7 +78,7 @@ router.post(
                 res.status(201).send({ name: newUser.name, email: newUser.email });
             });
         } catch (error: unknown) {
-            return res.status(501).send((error as Error).message);
+            return res.status(500).send((error as Error).message);
         }
     }
 );
