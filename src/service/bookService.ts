@@ -1,3 +1,4 @@
+import { FilterQuery } from "mongoose";
 import { Book, IBook } from "../model/bookModel";
 import { ImageSize } from "../utils/const";
 import { Err, Ok, Result } from "../utils/result";
@@ -18,12 +19,23 @@ export class BookNotFound extends Error {
 }
 
 export const getAllBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit } = queryParams;
+    const { page, limit, minPrice, maxPrice } = queryParams;
+
+    const filter: FilterQuery<IBook> = {};
+
+    // Add minPrice and maxPrice filters if they are provided
+    if (minPrice !== undefined && maxPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
+    } else if (minPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice };
+    } else if (maxPrice !== undefined) {
+        filter.currentPrice = { $lte: maxPrice };
+    }
 
     let count;
 
     try {
-        count = await Book.countDocuments();
+        count = await Book.countDocuments(filter);
     } catch (error) {
         return Err(error as Error);
     }
@@ -36,7 +48,7 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
     let books;
 
     try {
-        books = await Book.find()
+        books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
             .skip((page - 1) * limit)
             .limit(limit);
@@ -54,13 +66,24 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getNewBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit } = queryParams;
+    const { page, limit, minPrice, maxPrice } = queryParams;
     const currentYear = new Date().getFullYear();
+
+    const filter: FilterQuery<IBook> = { publicationYear: currentYear };
+
+    // Add minPrice and maxPrice filters if they are provided
+    if (minPrice !== undefined && maxPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
+    } else if (minPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice };
+    } else if (maxPrice !== undefined) {
+        filter.currentPrice = { $lte: maxPrice };
+    }
 
     let count;
 
     try {
-        count = await Book.countDocuments({ publicationYear: currentYear });
+        count = await Book.countDocuments(filter);
     } catch (error) {
         return Err(error as Error);
     }
@@ -73,7 +96,7 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
     let books;
 
     try {
-        books = await Book.find({ publicationYear: currentYear })
+        books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
             .skip((page - 1) * limit)
             .limit(limit);
@@ -91,12 +114,23 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit } = queryParams;
+    const { page, limit, minPrice, maxPrice } = queryParams;
+
+    const filter: FilterQuery<IBook> = { category: "Văn học kinh điển" };
+
+    // Add minPrice and maxPrice filters if they are provided
+    if (minPrice !== undefined && maxPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
+    } else if (minPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice };
+    } else if (maxPrice !== undefined) {
+        filter.currentPrice = { $lte: maxPrice };
+    }
 
     let count;
 
     try {
-        count = await Book.countDocuments({ category: "Văn học kinh điển" });
+        count = await Book.countDocuments(filter);
     } catch (error) {
         return Err(error as Error);
     }
@@ -109,7 +143,7 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
     let books;
 
     try {
-        books = await Book.find({ category: "Văn học kinh điển" })
+        books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
             .skip((page - 1) * limit)
             .limit(limit);
@@ -127,12 +161,23 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
 };
 
 export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit } = queryParams;
+    const { page, limit, minPrice, maxPrice } = queryParams;
+
+    const filter: FilterQuery<IBook> = { $expr: { $gt: ["$originalPrice", "$currentPrice"] } };
+
+    // Add minPrice and maxPrice filters if they are provided
+    if (minPrice !== undefined && maxPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
+    } else if (minPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice };
+    } else if (maxPrice !== undefined) {
+        filter.currentPrice = { $lte: maxPrice };
+    }
 
     let count;
 
     try {
-        count = await Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
+        count = await Book.countDocuments(filter);
     } catch (error) {
         return Err(error as Error);
     }
@@ -146,6 +191,9 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
 
     try {
         discountBooks = await Book.aggregate([
+            {
+                $match: filter,
+            },
             {
                 $addFields: {
                     priceDifference: {
@@ -197,12 +245,23 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
 };
 
 export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit } = queryParams;
+    const { page, limit, minPrice, maxPrice } = queryParams;
+
+    const filter: FilterQuery<IBook> = {};
+
+    // Add minPrice and maxPrice filters if they are provided
+    if (minPrice !== undefined && maxPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
+    } else if (minPrice !== undefined) {
+        filter.currentPrice = { $gte: minPrice };
+    } else if (maxPrice !== undefined) {
+        filter.currentPrice = { $lte: maxPrice };
+    }
 
     let count;
 
     try {
-        count = await Book.countDocuments({});
+        count = await Book.countDocuments(filter);
     } catch (error) {
         return Err(error as Error);
     }
@@ -215,7 +274,7 @@ export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<
     let books;
 
     try {
-        books = await Book.find({})
+        books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
             .sort({ discountPercent: -1 })
             .skip((page - 1) * limit)
