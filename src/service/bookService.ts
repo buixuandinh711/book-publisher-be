@@ -116,7 +116,7 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
     const { page, limit, minPrice, maxPrice } = queryParams;
 
-    const filter: FilterQuery<IBook> = { category: "Văn học kinh điển" };
+    const filter: FilterQuery<IBook> = { genre: "Văn học kinh điển" };
 
     // Add minPrice and maxPrice filters if they are provided
     if (minPrice !== undefined && maxPrice !== undefined) {
@@ -300,7 +300,7 @@ export const getRelatedBooks = async (id: string): Promise<Result<IBook[], Error
             return Err(new Error("Book not found"));
         }
 
-        const sameCategoryPromise = Book.find({ category: book.category, _id: { $ne: book.id } }).limit(5);
+        const sameCategoryPromise = Book.find({ genre: book.genre, _id: { $ne: book.id } }).limit(5);
         const sameAuthorPromise = Book.find({ author: book.author, _id: { $ne: book.id } }).limit(3);
         const sameYearPromise = Book.find({ publicationYear: book.publicationYear, _id: { $ne: book.id } }).limit(3);
 
@@ -336,7 +336,7 @@ export const countBooksInCategories = async (): Promise<
 > => {
     try {
         const newBooksPromise = Book.countDocuments({ publicationYear: new Date().getFullYear() });
-        const classicBooksPromise = Book.countDocuments({ category: "Văn học kinh điển" });
+        const classicBooksPromise = Book.countDocuments({ genre: "Văn học kinh điển" });
         const discountBooksPromise = Book.countDocuments({ $expr: { $gt: ["$originalPrice", "$currentPrice"] } });
         const popularBooksPromise = Book.countDocuments({});
 

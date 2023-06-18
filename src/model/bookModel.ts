@@ -7,7 +7,7 @@ export interface IBook {
     originalPrice: number;
     currentPrice: number;
     isbn: string;
-    category: string;
+    genre: string;
     author: string;
     publicationYear: number;
     dimensions: string;
@@ -28,7 +28,7 @@ const bookSchema = new Schema<IBook, BookModel, IBookMethods>({
     originalPrice: { type: Number, required: true, min: [10000, "Too low price"], max: [10000000, "Too high price"] },
     currentPrice: { type: Number, required: false, min: [10000, "Too low price"], max: [10000000, "Too high price"] },
     isbn: { type: String, required: false },
-    category: { type: String, required: true },
+    genre: { type: String, required: true },
     author: { type: String, required: true },
     publicationYear: { type: Number, required: false, min: [1800, "Too small year"], max: [2023, "Too large year"] },
     dimensions: { type: String, required: false },
