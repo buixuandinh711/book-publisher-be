@@ -19,11 +19,14 @@ export class BookNotFound extends Error {
 }
 
 export const getAllBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre } = queryParams;
 
     const filter: FilterQuery<IBook> = {};
 
-    // Add minPrice and maxPrice filters if they are provided
+    if (genre !== undefined) {
+        filter.genre = { $in: genre };
+    }
+
     if (minPrice !== undefined && maxPrice !== undefined) {
         filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
     } else if (minPrice !== undefined) {
@@ -41,7 +44,7 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
     }
 
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) {
+    if (totalPages > 0 && page > totalPages) {
         return Err(new PageTooLarge("Page number greater than total pages"));
     }
 
@@ -66,12 +69,15 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getNewBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre } = queryParams;
     const currentYear = new Date().getFullYear();
 
     const filter: FilterQuery<IBook> = { publicationYear: currentYear };
 
-    // Add minPrice and maxPrice filters if they are provided
+    if (genre !== undefined) {
+        filter.genre = { $in: genre };
+    }
+
     if (minPrice !== undefined && maxPrice !== undefined) {
         filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
     } else if (minPrice !== undefined) {
@@ -89,7 +95,7 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
     }
 
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) {
+    if (totalPages > 0 && page > totalPages) {
         return Err(new PageTooLarge("Page number greater than total pages"));
     }
 
@@ -114,11 +120,14 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre } = queryParams;
 
     const filter: FilterQuery<IBook> = { genre: "Văn học kinh điển" };
 
-    // Add minPrice and maxPrice filters if they are provided
+    if (genre !== undefined) {
+        filter.genre = { $in: genre };
+    }
+
     if (minPrice !== undefined && maxPrice !== undefined) {
         filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
     } else if (minPrice !== undefined) {
@@ -136,7 +145,7 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
     }
 
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) {
+    if (totalPages > 0 && page > totalPages) {
         return Err(new PageTooLarge("Page number greater than total pages"));
     }
 
@@ -161,11 +170,14 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
 };
 
 export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre } = queryParams;
 
     const filter: FilterQuery<IBook> = { $expr: { $gt: ["$originalPrice", "$currentPrice"] } };
 
-    // Add minPrice and maxPrice filters if they are provided
+    if (genre !== undefined) {
+        filter.genre = { $in: genre };
+    }
+
     if (minPrice !== undefined && maxPrice !== undefined) {
         filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
     } else if (minPrice !== undefined) {
@@ -183,7 +195,7 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
     }
 
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) {
+    if (totalPages > 0 && page > totalPages) {
         return Err(new PageTooLarge("Page number greater than total pages"));
     }
 
@@ -245,11 +257,14 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
 };
 
 export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre } = queryParams;
 
     const filter: FilterQuery<IBook> = {};
 
-    // Add minPrice and maxPrice filters if they are provided
+    if (genre !== undefined) {
+        filter.genre = { $in: genre };
+    }
+
     if (minPrice !== undefined && maxPrice !== undefined) {
         filter.currentPrice = { $gte: minPrice, $lte: maxPrice };
     } else if (minPrice !== undefined) {
@@ -267,7 +282,7 @@ export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<
     }
 
     const totalPages = Math.ceil(count / limit);
-    if (page > totalPages) {
+    if (totalPages > 0 && page > totalPages) {
         return Err(new PageTooLarge("Page number greater than total pages"));
     }
 
@@ -353,6 +368,25 @@ export const countBooksInCategories = async (): Promise<
             discountBooksCount,
             popularBooksCount,
         });
+    } catch (error) {
+        return Err(error as Error);
+    }
+};
+
+export const getBookGenres = async (): Promise<Result<string[], Error>> => {
+    try {
+        const result = await Book.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    genres: { $addToSet: "$genre" },
+                },
+            },
+        ]);
+
+        const allGenres = result[0].genres as string[];
+        const sortedGenres = allGenres.sort();
+        return Ok(sortedGenres);
     } catch (error) {
         return Err(error as Error);
     }

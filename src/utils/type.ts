@@ -3,6 +3,7 @@ export interface ReqQueryParams {
     limit?: string | string[];
     "min-price"?: string | string[];
     "max-price"?: string | string[];
+    genre?: string | string[];
 }
 
 export interface QueryParams {
@@ -10,6 +11,7 @@ export interface QueryParams {
     limit: number;
     minPrice?: number;
     maxPrice?: number;
+    genre?: string[];
 }
 
 export interface PaginatedResult<T> {

@@ -8,6 +8,7 @@ import {
     countBooksInCategories,
     getAllBooks,
     getBookById,
+    getBookGenres,
     getClassicBooks,
     getDiscountBooks,
     getNewBooks,
@@ -245,5 +246,13 @@ router.get(
         return res.json(result.data);
     }
 );
+
+router.get("/genres", async (_, res: Response<string[] | string>) => {
+    const result = await getBookGenres();
+    if (!result.ok) {
+        return res.status(500).send(result.error.message);
+    }
+    return res.json(result.data);
+});
 
 export { router };

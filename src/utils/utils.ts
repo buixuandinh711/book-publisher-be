@@ -14,7 +14,7 @@ const safeCastUint = (value: string): Result<number, Error> => {
 
 export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryParams, Error> => {
     const queryParams: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT };
-    const { page, limit, "min-price": minPrice, "max-price": maxPrice } = query;
+    const { page, limit, "min-price": minPrice, "max-price": maxPrice, genre } = query;
 
     if (page !== undefined && typeof page === "string") {
         const pageResult = safeCastUint(page);
@@ -58,6 +58,14 @@ export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryPara
         queryParams.minPrice > queryParams.maxPrice
     ) {
         return Err(new Error("minPrice greater than maxPrice"));
+    }
+
+    if (genre !== undefined) {
+        if (typeof genre === "string") {
+            queryParams.genre = [genre];
+        } else {
+            queryParams.genre = genre.sort();
+        }
     }
 
     return Ok(queryParams);
