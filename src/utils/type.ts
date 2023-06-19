@@ -1,8 +1,8 @@
 export interface ReqQueryParams {
-    page?: string;
-    limit?: string;
-    "min-price"?: string;
-    "max-price"?: string;
+    page?: string | string[];
+    limit?: string | string[];
+    "min-price"?: string | string[];
+    "max-price"?: string | string[];
 }
 
 export interface QueryParams {

@@ -2,7 +2,7 @@ import { DEFAULT_PAGE_LIMIT } from "./const";
 import { Result, Ok, Err } from "./result";
 import { QueryParams, ReqQueryParams } from "./type";
 
-const safeCastUint = (value: unknown): Result<number, Error> => {
+const safeCastUint = (value: string): Result<number, Error> => {
     const result = Number(value);
 
     if (isNaN(result) || !Number.isSafeInteger(result) || result < 0) {
@@ -14,16 +14,18 @@ const safeCastUint = (value: unknown): Result<number, Error> => {
 
 export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryParams, Error> => {
     const queryParams: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT };
-    if (query.page !== undefined) {
-        const pageResult = safeCastUint(query.page);
+    const { page, limit, "min-price": minPrice, "max-price": maxPrice } = query;
+
+    if (page !== undefined && typeof page === "string") {
+        const pageResult = safeCastUint(page);
         if (!pageResult.ok) {
             return Err(pageResult.error);
         }
         queryParams.page = pageResult.data;
     }
 
-    if (query.limit !== undefined) {
-        const limitResult = safeCastUint(query.limit);
+    if (limit !== undefined && typeof limit === "string") {
+        const limitResult = safeCastUint(limit);
         if (!limitResult.ok) {
             return Err(limitResult.error);
         }
@@ -34,16 +36,16 @@ export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryPara
         return Err(new Error("Page limit too large"));
     }
 
-    if (query["min-price"] !== undefined) {
-        const minPriceResult = safeCastUint(query["min-price"]);
+    if (minPrice !== undefined && typeof minPrice === "string") {
+        const minPriceResult = safeCastUint(minPrice);
         if (!minPriceResult.ok) {
             return Err(minPriceResult.error);
         }
         queryParams.minPrice = minPriceResult.data;
     }
 
-    if (query["max-price"] !== undefined) {
-        const maxPriceResult = safeCastUint(query["max-price"]);
+    if (maxPrice !== undefined && typeof maxPrice === "string") {
+        const maxPriceResult = safeCastUint(maxPrice);
         if (!maxPriceResult.ok) {
             return Err(maxPriceResult.error);
         }
