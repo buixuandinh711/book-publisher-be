@@ -2,6 +2,8 @@ import { DEFAULT_PAGE_LIMIT } from "./const";
 import { Result, Ok, Err } from "./result";
 import { QueryParams, ReqQueryParams } from "./type";
 
+const yearRegex = /^(19|20)\d{2}$/
+
 const safeCastUint = (value: string): Result<number, Error> => {
     const result = Number(value);
 
@@ -14,7 +16,7 @@ const safeCastUint = (value: string): Result<number, Error> => {
 
 export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryParams, Error> => {
     const queryParams: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT };
-    const { page, limit, "min-price": minPrice, "max-price": maxPrice, genre } = query;
+    const { page, limit, "min-price": minPrice, "max-price": maxPrice, genre, year } = query;
 
     if (page !== undefined && typeof page === "string") {
         const pageResult = safeCastUint(page);
@@ -65,6 +67,20 @@ export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryPara
             queryParams.genre = [genre];
         } else {
             queryParams.genre = genre.sort();
+        }
+    }
+
+    if (year !== undefined) {
+        if (typeof year === "string") {
+            if (!year.match(yearRegex)) {
+                return Err(new Error("Invalid year format"))
+            }
+            queryParams.year = [parseInt(year)]
+        } else {
+            if (!year.every(y => y.match(yearRegex))) {
+                return Err(new Error("Invalid year format"))
+            }
+            queryParams.year = year.map(y => parseInt(y)).sort((a, b) => b-a)
         }
     }
 

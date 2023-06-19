@@ -19,12 +19,23 @@ export class BookNotFound extends Error {
 }
 
 export const getAllBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
 
     const filter: FilterQuery<IBook> = {};
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
+    }
+
+    if (year !== undefined) {
+        const currentYear = new Date().getFullYear()
+        const lastYear = currentYear - 9
+        filter.$or = [
+            { publicationYear: { $in: year } },
+        ];
+        if (year[year.length - 1] === lastYear) {
+            filter.$or.push({ publicationYear: { $lt: lastYear } })
+        }
     }
 
     if (minPrice !== undefined && maxPrice !== undefined) {
@@ -69,13 +80,24 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getNewBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
     const currentYear = new Date().getFullYear();
 
-    const filter: FilterQuery<IBook> = { publicationYear: currentYear };
+    const filter: FilterQuery<IBook> = { publicationYear: {$gte: currentYear - 2} };
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
+    }
+
+    if (year !== undefined) {
+        const currentYear = new Date().getFullYear()
+        const lastYear = currentYear - 9
+        filter.$or = [
+            { publicationYear: { $in: year } },
+        ];
+        if (year[year.length - 1] === lastYear) {
+            filter.$or.push({ publicationYear: { $lt: lastYear } })
+        }
     }
 
     if (minPrice !== undefined && maxPrice !== undefined) {
@@ -120,12 +142,23 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
 
     const filter: FilterQuery<IBook> = { genre: "Văn học kinh điển" };
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
+    }
+
+    if (year !== undefined) {
+        const currentYear = new Date().getFullYear()
+        const lastYear = currentYear - 9
+        filter.$or = [
+            { publicationYear: { $in: year } },
+        ];
+        if (year[year.length - 1] === lastYear) {
+            filter.$or.push({ publicationYear: { $lt: lastYear } })
+        }
     }
 
     if (minPrice !== undefined && maxPrice !== undefined) {
@@ -170,12 +203,24 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
 };
 
 export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
 
-    const filter: FilterQuery<IBook> = { $expr: { $gt: ["$originalPrice", "$currentPrice"] } };
+    const filter: FilterQuery<IBook> = { $and: [{ $expr: { $lt: ['$currentPrice', '$originalPrice'] } },] };
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
+    }
+
+    if (year !== undefined) {
+        const currentYear = new Date().getFullYear()
+        const lastYear = currentYear - 9
+        const yearFilter: FilterQuery<IBook>[] = [
+            { publicationYear: { $in: year } },
+        ];
+        if (year[year.length - 1] === lastYear) {
+            yearFilter.push({ publicationYear: { $lt: lastYear } })
+        }
+        filter.$and?.push({$or: yearFilter})
     }
 
     if (minPrice !== undefined && maxPrice !== undefined) {
@@ -204,7 +249,7 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
     try {
         discountBooks = await Book.aggregate([
             {
-                $match: filter,
+                $match: filter
             },
             {
                 $addFields: {
@@ -257,12 +302,23 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
 };
 
 export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
 
     const filter: FilterQuery<IBook> = {};
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
+    }
+
+    if (year !== undefined) {
+        const currentYear = new Date().getFullYear()
+        const lastYear = currentYear - 9
+        filter.$or = [
+            { publicationYear: { $in: year } },
+        ];
+        if (year[year.length - 1] === lastYear) {
+            filter.$or.push({ publicationYear: { $lt: lastYear } })
+        }
     }
 
     if (minPrice !== undefined && maxPrice !== undefined) {
