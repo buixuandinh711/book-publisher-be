@@ -55,6 +55,16 @@ const bookSchema = new Schema<IBook, BookModel, IBookMethods>(
     {
         timestamps: true,
     }
+    // {
+    //     timestamps: {
+    //         currentTime: () => {
+    //           const start = new Date('2000-01-01').getTime();
+    //           const end = new Date('2023-12-31').getTime();
+    //           const randomTime = Math.floor(Math.random() * (end - start + 1)) + start;
+    //           return new Date(randomTime);
+    //         },
+    //       },
+    // }
 );
 
 bookSchema.methods.toClient = function (imageWidth: number): IBook {
