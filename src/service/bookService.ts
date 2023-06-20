@@ -1,4 +1,4 @@
-import { FilterQuery } from "mongoose";
+import { FilterQuery, Expression } from "mongoose";
 import { Book, IBook } from "../model/bookModel";
 import { ImageSize } from "../utils/const";
 import { Err, Ok, Result } from "../utils/result";
@@ -19,7 +19,7 @@ export class BookNotFound extends Error {
 }
 
 export const getAllBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year, sortBy } = queryParams;
 
     const filter: FilterQuery<IBook> = {};
 
@@ -28,13 +28,11 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
     }
 
     if (year !== undefined) {
-        const currentYear = new Date().getFullYear()
-        const lastYear = currentYear - 9
-        filter.$or = [
-            { publicationYear: { $in: year } },
-        ];
+        const currentYear = new Date().getFullYear();
+        const lastYear = currentYear - 9;
+        filter.$or = [{ publicationYear: { $in: year } }];
         if (year[year.length - 1] === lastYear) {
-            filter.$or.push({ publicationYear: { $lt: lastYear } })
+            filter.$or.push({ publicationYear: { $lt: lastYear } });
         }
     }
 
@@ -61,9 +59,15 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 
     let books;
 
+    const sortFilter: { [key: string]: "asc" | "desc" } = {};
+    if (sortBy !== undefined) {
+        sortFilter[sortBy.field] = sortBy.order;
+    }
+
     try {
         books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
+            .sort(sortFilter)
             .skip((page - 1) * limit)
             .limit(limit);
     } catch (err) {
@@ -80,23 +84,22 @@ export const getAllBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getNewBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
-    const currentYear = new Date().getFullYear();
+    const { page, limit, minPrice, maxPrice, genre, year, sortBy } = queryParams;
+    const lastOneYear = new Date();
+    lastOneYear.setFullYear(lastOneYear.getFullYear() - 1);
 
-    const filter: FilterQuery<IBook> = { publicationYear: {$gte: currentYear - 2} };
+    const filter: FilterQuery<IBook> = { createdAt: { $gte: lastOneYear } };
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
     }
 
     if (year !== undefined) {
-        const currentYear = new Date().getFullYear()
-        const lastYear = currentYear - 9
-        filter.$or = [
-            { publicationYear: { $in: year } },
-        ];
+        const currentYear = new Date().getFullYear();
+        const lastYear = currentYear - 9;
+        filter.$or = [{ publicationYear: { $in: year } }];
         if (year[year.length - 1] === lastYear) {
-            filter.$or.push({ publicationYear: { $lt: lastYear } })
+            filter.$or.push({ publicationYear: { $lt: lastYear } });
         }
     }
 
@@ -123,9 +126,15 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 
     let books;
 
+    const sortFilter: { [key: string]: "asc" | "desc" } = {};
+    if (sortBy !== undefined) {
+        sortFilter[sortBy.field] = sortBy.order;
+    }
+
     try {
         books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
+            .sort(sortFilter)
             .skip((page - 1) * limit)
             .limit(limit);
     } catch (err) {
@@ -142,7 +151,7 @@ export const getNewBooks = async (queryParams: QueryParams): Promise<Result<Pagi
 };
 
 export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year, sortBy } = queryParams;
 
     const filter: FilterQuery<IBook> = { genre: "Văn học kinh điển" };
 
@@ -151,13 +160,11 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
     }
 
     if (year !== undefined) {
-        const currentYear = new Date().getFullYear()
-        const lastYear = currentYear - 9
-        filter.$or = [
-            { publicationYear: { $in: year } },
-        ];
+        const currentYear = new Date().getFullYear();
+        const lastYear = currentYear - 9;
+        filter.$or = [{ publicationYear: { $in: year } }];
         if (year[year.length - 1] === lastYear) {
-            filter.$or.push({ publicationYear: { $lt: lastYear } })
+            filter.$or.push({ publicationYear: { $lt: lastYear } });
         }
     }
 
@@ -183,10 +190,15 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
     }
 
     let books;
+    const sortFilter: { [key: string]: "asc" | "desc" } = {};
+    if (sortBy !== undefined) {
+        sortFilter[sortBy.field] = sortBy.order;
+    }
 
     try {
         books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
+            .sort(sortFilter)
             .skip((page - 1) * limit)
             .limit(limit);
     } catch (err) {
@@ -203,24 +215,22 @@ export const getClassicBooks = async (queryParams: QueryParams): Promise<Result<
 };
 
 export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year, sortBy } = queryParams;
 
-    const filter: FilterQuery<IBook> = { $and: [{ $expr: { $lt: ['$currentPrice', '$originalPrice'] } },] };
+    const filter: FilterQuery<IBook> = { $and: [{ $expr: { $lt: ["$currentPrice", "$originalPrice"] } }] };
 
     if (genre !== undefined) {
         filter.genre = { $in: genre };
     }
 
     if (year !== undefined) {
-        const currentYear = new Date().getFullYear()
-        const lastYear = currentYear - 9
-        const yearFilter: FilterQuery<IBook>[] = [
-            { publicationYear: { $in: year } },
-        ];
+        const currentYear = new Date().getFullYear();
+        const lastYear = currentYear - 9;
+        const yearFilter: FilterQuery<IBook>[] = [{ publicationYear: { $in: year } }];
         if (year[year.length - 1] === lastYear) {
-            yearFilter.push({ publicationYear: { $lt: lastYear } })
+            yearFilter.push({ publicationYear: { $lt: lastYear } });
         }
-        filter.$and?.push({$or: yearFilter})
+        filter.$and?.push({ $or: yearFilter });
     }
 
     if (minPrice !== undefined && maxPrice !== undefined) {
@@ -246,39 +256,42 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
 
     let discountBooks;
 
+    const discountAggregate: any[] = [
+        {
+            $match: filter,
+        },
+        {
+            $addFields: {
+                priceDifference: {
+                    $divide: [{ $subtract: ["$originalPrice", "$currentPrice"] }, "$originalPrice"],
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                name: 1,
+                image: 1,
+                originalPrice: 1,
+                currentPrice: 1,
+            },
+        },
+        {
+            $skip: (page - 1) * limit,
+        },
+        {
+            $limit: limit,
+        },
+    ];
+
+    if (sortBy !== undefined) {
+        const sortFilter: Record<string, 1 | -1 | Expression.Meta> = {};
+        sortFilter[sortBy.field] = sortBy.order === "asc" ? 1 : -1;
+        discountAggregate.splice(1, 0, { $sort: sortFilter });
+    }
+
     try {
-        discountBooks = await Book.aggregate([
-            {
-                $match: filter
-            },
-            {
-                $addFields: {
-                    priceDifference: {
-                        $divide: [{ $subtract: ["$originalPrice", "$currentPrice"] }, "$originalPrice"],
-                    },
-                },
-            },
-            {
-                $sort: {
-                    priceDifference: -1, // Sort in descending order
-                },
-            },
-            {
-                $project: {
-                    _id: 1,
-                    name: 1,
-                    image: 1,
-                    originalPrice: 1,
-                    currentPrice: 1,
-                },
-            },
-            {
-                $skip: (page - 1) * limit,
-            },
-            {
-                $limit: limit,
-            },
-        ]);
+        discountBooks = await Book.aggregate(discountAggregate);
     } catch (err) {
         return Err(err as Error);
     }
@@ -302,7 +315,7 @@ export const getDiscountBooks = async (queryParams: QueryParams): Promise<Result
 };
 
 export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<PaginatedResult<IBook>, Error>> => {
-    const { page, limit, minPrice, maxPrice, genre, year } = queryParams;
+    const { page, limit, minPrice, maxPrice, genre, year, sortBy } = queryParams;
 
     const filter: FilterQuery<IBook> = {};
 
@@ -311,13 +324,11 @@ export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<
     }
 
     if (year !== undefined) {
-        const currentYear = new Date().getFullYear()
-        const lastYear = currentYear - 9
-        filter.$or = [
-            { publicationYear: { $in: year } },
-        ];
+        const currentYear = new Date().getFullYear();
+        const lastYear = currentYear - 9;
+        filter.$or = [{ publicationYear: { $in: year } }];
         if (year[year.length - 1] === lastYear) {
-            filter.$or.push({ publicationYear: { $lt: lastYear } })
+            filter.$or.push({ publicationYear: { $lt: lastYear } });
         }
     }
 
@@ -344,10 +355,15 @@ export const getPopularBooks = async (queryParams: QueryParams): Promise<Result<
 
     let books;
 
+    const sortFilter: { [key: string]: "asc" | "desc" } = {};
+    if (sortBy !== undefined) {
+        sortFilter[sortBy.field] = sortBy.order;
+    }
+
     try {
         books = await Book.find(filter)
             .select("_id name image originalPrice currentPrice")
-            .sort({ discountPercent: -1 })
+            .sort(sortFilter)
             .skip((page - 1) * limit)
             .limit(limit);
     } catch (err) {

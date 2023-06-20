@@ -22,20 +22,40 @@ export interface IBookMethods {
 
 type BookModel = Model<IBook, unknown, IBookMethods>;
 
-const bookSchema = new Schema<IBook, BookModel, IBookMethods>({
-    name: { type: String, required: true },
-    image: { type: String, required: true },
-    originalPrice: { type: Number, required: true, min: [10000, "Too low price"], max: [10000000, "Too high price"] },
-    currentPrice: { type: Number, required: false, min: [10000, "Too low price"], max: [10000000, "Too high price"] },
-    isbn: { type: String, required: false },
-    genre: { type: String, required: true },
-    author: { type: String, required: true },
-    publicationYear: { type: Number, required: false, min: [1800, "Too small year"], max: [2023, "Too large year"] },
-    dimensions: { type: String, required: false },
-    numPages: { type: Number, required: false, min: [1, "Too few pages"], max: [10000, "Too many pages"] },
-    coverType: { type: String, required: false },
-    description: { type: String, required: false },
-});
+const bookSchema = new Schema<IBook, BookModel, IBookMethods>(
+    {
+        name: { type: String, required: true },
+        image: { type: String, required: true },
+        originalPrice: {
+            type: Number,
+            required: true,
+            min: [10000, "Too low price"],
+            max: [10000000, "Too high price"],
+        },
+        currentPrice: {
+            type: Number,
+            required: false,
+            min: [10000, "Too low price"],
+            max: [10000000, "Too high price"],
+        },
+        isbn: { type: String, required: false },
+        genre: { type: String, required: true },
+        author: { type: String, required: true },
+        publicationYear: {
+            type: Number,
+            required: false,
+            min: [1800, "Too small year"],
+            max: [2023, "Too large year"],
+        },
+        dimensions: { type: String, required: false },
+        numPages: { type: Number, required: false, min: [1, "Too few pages"], max: [10000, "Too many pages"] },
+        coverType: { type: String, required: false },
+        description: { type: String, required: false },
+    },
+    {
+        timestamps: true,
+    }
+);
 
 bookSchema.methods.toClient = function (imageWidth: number): IBook {
     // replace and remove unused fields

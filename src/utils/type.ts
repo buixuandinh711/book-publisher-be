@@ -5,6 +5,7 @@ export interface ReqQueryParams {
     "max-price"?: string | string[];
     genre?: string | string[];
     year?: string | string[];
+    "sort-by": string | string[];
 }
 
 export interface QueryParams {
@@ -14,6 +15,10 @@ export interface QueryParams {
     maxPrice?: number;
     genre?: string[];
     year?: number[];
+    sortBy?: {
+        field: "currentPrice" | "name" | "createdAt";
+        order: "asc" | "desc";
+    };
 }
 
 export interface PaginatedResult<T> {

@@ -2,7 +2,7 @@ import { DEFAULT_PAGE_LIMIT } from "./const";
 import { Result, Ok, Err } from "./result";
 import { QueryParams, ReqQueryParams } from "./type";
 
-const yearRegex = /^(19|20)\d{2}$/
+const yearRegex = /^(19|20)\d{2}$/;
 
 const safeCastUint = (value: string): Result<number, Error> => {
     const result = Number(value);
@@ -16,7 +16,7 @@ const safeCastUint = (value: string): Result<number, Error> => {
 
 export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryParams, Error> => {
     const queryParams: QueryParams = { page: 1, limit: DEFAULT_PAGE_LIMIT };
-    const { page, limit, "min-price": minPrice, "max-price": maxPrice, genre, year } = query;
+    const { page, limit, "min-price": minPrice, "max-price": maxPrice, genre, year, "sort-by": sortBy } = query;
 
     if (page !== undefined && typeof page === "string") {
         const pageResult = safeCastUint(page);
@@ -73,14 +73,43 @@ export const validateAndExtractQuery = (query: ReqQueryParams): Result<QueryPara
     if (year !== undefined) {
         if (typeof year === "string") {
             if (!year.match(yearRegex)) {
-                return Err(new Error("Invalid year format"))
+                return Err(new Error("Invalid year format"));
             }
-            queryParams.year = [parseInt(year)]
+            queryParams.year = [parseInt(year)];
         } else {
-            if (!year.every(y => y.match(yearRegex))) {
-                return Err(new Error("Invalid year format"))
+            if (!year.every((y) => y.match(yearRegex))) {
+                return Err(new Error("Invalid year format"));
             }
-            queryParams.year = year.map(y => parseInt(y)).sort((a, b) => b-a)
+            queryParams.year = year.map((y) => parseInt(y)).sort((a, b) => b - a);
+        }
+    }
+
+    if (sortBy !== undefined) {
+        if (typeof sortBy === "string") {
+            const [sortField, sortOrder] = sortBy.split("-") as (string | undefined)[];
+
+            if (sortField === undefined) {
+                return Err(new Error("Sort field not specified"));
+            }
+
+            let mappedSortField: "currentPrice" | "name" | "createdAt";
+            if (sortField === "price") {
+                mappedSortField = "currentPrice";
+            } else if (sortField === "alpha") {
+                mappedSortField = "name";
+            } else if (sortField === "created") {
+                mappedSortField = "createdAt";
+            } else {
+                return Err(new Error("Invalid sort field"));
+            }
+
+            if (sortOrder === undefined || !(sortOrder === "asc" || sortOrder === "desc")) {
+                return Err(new Error("Invalid sort order"));
+            }
+            queryParams.sortBy = {
+                field: mappedSortField,
+                order: sortOrder,
+            };
         }
     }
 
