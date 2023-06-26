@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
-import { District, Province, Ward, getDistrict, getProvice, getWard } from "../service/checkoutService";
+import { District, Province, Ward, getDistrict, getProvince, getWard } from "../service/checkoutService";
 import { safeCastUint } from "../utils/utils";
 
 const router = express.Router();
 
 router.get("/province", async (req: Request, res: Response<Province[] | string>) => {
-    const result = await getProvice();
+    const result = await getProvince();
     if (!result.ok) {
         return res.status(500).send(result.error.message);
     }

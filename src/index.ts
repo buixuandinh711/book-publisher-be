@@ -7,6 +7,7 @@ import { router as checkoutRouter } from "./router/checkoutRouter";
 import cors from "cors";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+import { createClient } from "redis";
 
 // Extend the Express session data with custom properties
 declare module "express-session" {
@@ -15,11 +16,15 @@ declare module "express-session" {
     }
 }
 
+export const redisClient = createClient();
+
 const main = async () => {
     const DB_HOST = process.env.DB_HOST || "127.0.0.1";
     const DB_PORT = process.env.DB_PORT || "27017";
     const DB_NAME = process.env.DB_NAME;
     await mongoose.connect(`mongodb://${DB_HOST}:${DB_PORT}/${DB_NAME}`);
+    await redisClient.connect();
+    redisClient.on("error", (err) => console.log("Redis Client Error", err));
 
     const SERVER_PORT = process.env.SERVER_PORT || 5000;
     const app = express();

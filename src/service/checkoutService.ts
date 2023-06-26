@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { Err, Ok, Result } from "../utils/result";
+import { redisClient } from "..";
 
 const GHN_TOKEN_API = process.env.GHN_TOKEN_API;
 const GHN_END_POINT = process.env.GHN_END_POINT;
@@ -29,8 +30,14 @@ interface GHNResponseData {
     data?: unknown;
 }
 
-export const getProvice = async (): Promise<Result<Province[], Error>> => {
+export const getProvince = async (): Promise<Result<Province[], Error>> => {
     try {
+        const cachedProvinced = await redisClient.get("province");
+        if (cachedProvinced !== null) {
+            const provinceData = JSON.parse(cachedProvinced);
+            return Ok(provinceData);
+        }
+
         const provinceRes = await fetch(`${GHN_END_POINT}/master-data/province`, {
             headers: {
                 "Content-Type": "application/json",
@@ -65,6 +72,8 @@ export const getProvice = async (): Promise<Result<Province[], Error>> => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .map<Province>((data) => ({ name: data.ProvinceName!, id: data.ProvinceID! }));
 
+        await redisClient.set("province", JSON.stringify(transformedData));
+
         return Ok(transformedData);
     } catch (error) {
         return Err(error as Error);
@@ -73,6 +82,12 @@ export const getProvice = async (): Promise<Result<Province[], Error>> => {
 
 export const getDistrict = async (provinceId: number): Promise<Result<District[], Error>> => {
     try {
+        const cachedDistrict = await redisClient.get(`district:${provinceId}`);
+        if (cachedDistrict !== null) {
+            const provinceData = JSON.parse(cachedDistrict);
+            return Ok(provinceData);
+        }
+
         const districtRes = await fetch(`${GHN_END_POINT}/master-data/district`, {
             method: "POST",
             headers: {
@@ -113,6 +128,8 @@ export const getDistrict = async (provinceId: number): Promise<Result<District[]
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .map<District>((data) => ({ name: data.DistrictName!, id: data.DistrictID! }));
 
+        await redisClient.set(`district:${provinceId}`, JSON.stringify(transformedData));
+
         return Ok(transformedData);
     } catch (error) {
         return Err(error as Error);
@@ -121,6 +138,12 @@ export const getDistrict = async (provinceId: number): Promise<Result<District[]
 
 export const getWard = async (districId: number): Promise<Result<Ward[], Error>> => {
     try {
+        const cachedWard = await redisClient.get(`ward:${districId}`);
+        if (cachedWard !== null) {
+            const provinceData = JSON.parse(cachedWard);
+            return Ok(provinceData);
+        }
+
         const wardRes = await fetch(`${GHN_END_POINT}/master-data/ward?district_id`, {
             method: "POST",
             headers: {
@@ -160,6 +183,8 @@ export const getWard = async (districId: number): Promise<Result<Ward[], Error>>
             )
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .map<Ward>((data) => ({ name: data.WardName!, code: data.WardCode! }));
+
+        await redisClient.set(`ward:${districId}`, JSON.stringify(transformedData));
 
         return Ok(transformedData);
     } catch (error) {
