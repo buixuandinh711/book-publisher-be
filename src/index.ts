@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import "dotenv/config";
 import { router as bookRouter } from "./router/bookRouter";
 import { router as userRouter } from "./router/userRouter";
+import { router as checkoutRouter } from "./router/checkoutRouter";
 import cors from "cors";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -24,8 +25,8 @@ const main = async () => {
     const app = express();
     app.use(
         cors({
-            origin: 'http://127.0.0.1:3000',
-            credentials: true
+            origin: "http://127.0.0.1:3000",
+            credentials: true,
         })
     );
 
@@ -45,6 +46,7 @@ const main = async () => {
 
     app.use("/books", bookRouter);
     app.use("/user", userRouter);
+    app.use("/checkout", checkoutRouter);
     app.listen(SERVER_PORT, () => {
         console.log("Server listening on port", SERVER_PORT);
     });

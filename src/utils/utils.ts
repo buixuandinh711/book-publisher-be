@@ -4,7 +4,7 @@ import { QueryParams, ReqQueryParams } from "./type";
 
 const yearRegex = /^(19|20)\d{2}$/;
 
-const safeCastUint = (value: string): Result<number, Error> => {
+export const safeCastUint = (value: string): Result<number, Error> => {
     const result = Number(value);
 
     if (isNaN(result) || !Number.isSafeInteger(result) || result < 0) {
