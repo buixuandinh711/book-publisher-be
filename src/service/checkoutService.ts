@@ -70,7 +70,8 @@ export const getProvince = async (): Promise<Result<Province[], Error>> => {
                     data.ProvinceName !== undefined
             )
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map<Province>((data) => ({ name: data.ProvinceName!, id: data.ProvinceID! }));
+            .map<Province>((data) => ({ name: data.ProvinceName!, id: data.ProvinceID! }))
+            .sort((a, b) => a.name.localeCompare(b.name, "vi"));
 
         await redisClient.set("province", JSON.stringify(transformedData));
 
@@ -126,7 +127,8 @@ export const getDistrict = async (provinceId: number): Promise<Result<District[]
                     data.SupportType === 3
             )
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map<District>((data) => ({ name: data.DistrictName!, id: data.DistrictID! }));
+            .map<District>((data) => ({ name: data.DistrictName!, id: data.DistrictID! }))
+            .sort((a, b) => a.name.localeCompare(b.name, "vi"));
 
         await redisClient.set(`district:${provinceId}`, JSON.stringify(transformedData));
 
@@ -182,7 +184,8 @@ export const getWard = async (districId: number): Promise<Result<Ward[], Error>>
                     data.SupportType === 3
             )
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map<Ward>((data) => ({ name: data.WardName!, code: data.WardCode! }));
+            .map<Ward>((data) => ({ name: data.WardName!, code: data.WardCode! }))
+            .sort((a, b) => a.name.localeCompare(b.name, "vi"));
 
         await redisClient.set(`ward:${districId}`, JSON.stringify(transformedData));
 
