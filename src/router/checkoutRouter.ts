@@ -4,6 +4,18 @@ import { safeCastUint } from "../utils/utils";
 
 const router = express.Router();
 
+interface SubmitOrderFrom {
+    name?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    province?: "";
+    district?: "";
+    ward?: "";
+    note?: "";
+    payment?: "";
+}
+
 router.get("/province", async (req: Request, res: Response<Province[] | string>) => {
     const result = await getProvince();
     if (!result.ok) {
@@ -57,6 +69,10 @@ router.get("/ward/:districtId", async (req: Request<{ districtId?: unknown }>, r
         return res.status(500).send(result.error.message);
     }
     return res.send(result.data);
+});
+
+router.post("/submit-order", express.json(), (req: Request<unknown, unknown, SubmitOrderFrom>, res: Response) => {
+    return res.send(req.body);
 });
 
 export { router };
