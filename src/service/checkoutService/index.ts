@@ -1,11 +1,13 @@
 import "dotenv/config";
-import { Err, Ok, Result } from "../utils/result";
-import { redisClient } from "..";
+import { Err, Ok, Result } from "../../utils/result";
+import { redisClient } from "../..";
+import { PaymentMethod, createPreviewBody } from "./utils";
 
 const GHN_TOKEN_API = process.env.GHN_TOKEN_API;
+const GHN_SHOP_ID = process.env.GHN_SHOP_ID;
 const GHN_END_POINT = process.env.GHN_END_POINT;
 
-if (GHN_TOKEN_API === undefined || GHN_END_POINT === undefined) {
+if (GHN_TOKEN_API === undefined || GHN_SHOP_ID === undefined || GHN_END_POINT === undefined) {
     throw new Error("Faild to load GHN env variables");
 }
 
@@ -28,6 +30,11 @@ interface GHNResponseData {
     code: number;
     message: "Success" | string;
     data?: unknown;
+}
+
+export interface PreviewInfo {
+    shippingFee: number;
+    shippingTime: string;
 }
 
 export const getProvince = async (): Promise<Result<Province[], Error>> => {
@@ -190,6 +197,61 @@ export const getWard = async (districId: number): Promise<Result<Ward[], Error>>
         await redisClient.set(`ward:${districId}`, JSON.stringify(transformedData));
 
         return Ok(transformedData);
+    } catch (error) {
+        return Err(error as Error);
+    }
+};
+
+export const getPreviewOrder = async (
+    toDistrictId: string,
+    toWardCode: string,
+    quantity: number
+): Promise<Result<PreviewInfo, Error>> => {
+    const headers = {
+        token: GHN_TOKEN_API,
+        shop_id: GHN_SHOP_ID,
+        "Content-Type": "application/json",
+    };
+
+    const body = createPreviewBody(toDistrictId, toWardCode, quantity);
+
+    const endPoint = `${GHN_END_POINT}/v2/shipping-order/preview`;
+
+    const redisKey = `preview-${toDistrictId}-${toWardCode}-${quantity}`;
+
+    try {
+        const cachedData = await redisClient.get(redisKey);
+        if (cachedData !== null) {
+            const parsedData = JSON.parse(cachedData);
+            return Ok(parsedData);
+        }
+
+        const previewRes = await fetch(endPoint, {
+            method: "POST",
+            headers,
+            body,
+        });
+
+        if (!previewRes.ok) {
+            throw new Error("Failed to fetch preview data");
+        }
+
+        const previewResData: GHNResponseData = await previewRes.json();
+        if (previewResData.code !== 200 || previewResData.message !== "Success") {
+            throw new Error("Fetched data has failed status");
+        }
+
+        const { total_fee, expected_delivery_time } = previewResData.data as {
+            total_fee: number;
+            expected_delivery_time: string;
+        };
+
+        await redisClient.set(
+            redisKey,
+            JSON.stringify({ shippingFee: total_fee, shippingTime: expected_delivery_time })
+        );
+
+        return Ok({ shippingFee: total_fee, shippingTime: expected_delivery_time });
     } catch (error) {
         return Err(error as Error);
     }

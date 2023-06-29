@@ -1,6 +1,18 @@
 import express, { Request, Response } from "express";
-import { District, Province, Ward, getDistrict, getProvince, getWard } from "../service/checkoutService";
+import {
+    District,
+    PreviewInfo,
+    Province,
+    Ward,
+    getDistrict,
+    getPreviewOrder,
+    getProvince,
+    getWard,
+} from "../service/checkoutService";
 import { safeCastUint } from "../utils/utils";
+import { createPreviewBody } from "../service/checkoutService/utils";
+import { auth } from "../middleware/auth";
+import { IUser } from "../model/userModel";
 
 const router = express.Router();
 
@@ -74,5 +86,27 @@ router.get("/ward/:districtId", async (req: Request<{ districtId?: unknown }>, r
 router.post("/submit-order", express.json(), (req: Request<unknown, unknown, SubmitOrderFrom>, res: Response) => {
     return res.send(req.body);
 });
+
+router.post(
+    "/preview-order",
+    express.json(),
+    auth,
+    async (req: Request<unknown, unknown, SubmitOrderFrom>, res: Response<PreviewInfo | string, { user: IUser }>) => {
+        const { district, ward } = req.body;
+        if (!district || !ward) {
+            return res.status(400).send();
+        }
+
+        const user = res.locals.user;
+        const quantity = user.cart.reduce((accumulator, current) => accumulator + current.quantity, 0);
+        const result = await getPreviewOrder(district, ward, quantity);
+
+        if (!result.ok) {
+            return res.status(500).send(result.error.message);
+        }
+
+        return res.send(result.data);
+    }
+);
 
 export { router };
