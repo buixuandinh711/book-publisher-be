@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Err, Ok, Result } from "../../utils/result";
 import { redisClient } from "../..";
-import { PaymentMethod, createPreviewBody } from "./utils";
+import { District, GHNResponseData, PreviewInfo, Province, Ward, createPreviewBody } from "./utils";
 
 const GHN_TOKEN_API = process.env.GHN_TOKEN_API;
 const GHN_SHOP_ID = process.env.GHN_SHOP_ID;
@@ -9,32 +9,6 @@ const GHN_END_POINT = process.env.GHN_END_POINT;
 
 if (GHN_TOKEN_API === undefined || GHN_SHOP_ID === undefined || GHN_END_POINT === undefined) {
     throw new Error("Faild to load GHN env variables");
-}
-
-export interface Province {
-    name: string;
-    id: number;
-}
-
-export interface District {
-    name: string;
-    id: number;
-}
-
-export interface Ward {
-    name: string;
-    code: string;
-}
-
-interface GHNResponseData {
-    code: number;
-    message: "Success" | string;
-    data?: unknown;
-}
-
-export interface PreviewInfo {
-    shippingFee: number;
-    shippingTime: string;
 }
 
 export const getProvince = async (): Promise<Result<Province[], Error>> => {

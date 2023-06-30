@@ -1,10 +1,6 @@
 import { Schema, model, Document, Model, HydratedDocument, CallbackError, Types } from "mongoose";
 import bcrypt from "bcrypt";
-
-export interface ICartItem {
-    book: Types.ObjectId;
-    quantity: number;
-}
+import { CartItemSchema, ICartItem } from "./cartSchema";
 
 export interface IUser extends Document {
     name: string;
@@ -44,17 +40,7 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
         required: true,
     },
     cart: {
-        type: [
-            {
-                book: {
-                    type: Schema.Types.ObjectId,
-                    ref: "Book",
-                },
-                quantity: {
-                    type: Number,
-                },
-            },
-        ],
+        type: [CartItemSchema],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         // get: (v: any) =>
         //     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,9 +1,5 @@
 import { Schema, Document, Types, model } from "mongoose";
-
-interface Orderitem extends Document {
-    book: Types.ObjectId;
-    quantity: number;
-}
+import { CartItemSchema, ICartItem } from "./cartSchema";
 
 export interface IOrder extends Document {
     id: Types.ObjectId;
@@ -15,20 +11,8 @@ export interface IOrder extends Document {
     shippingCode: string;
     note: string;
     payment: "COD" | "MOMO";
-    items: Types.DocumentArray<Orderitem>;
+    items: Types.DocumentArray<ICartItem>;
 }
-
-const OrderitemSchema = new Schema<Orderitem>({
-    book: {
-        type: Schema.Types.ObjectId,
-        ref: "Book",
-        required: true,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-    },
-});
 
 const OrderSchema = new Schema<IOrder>({
     userId: {
@@ -83,7 +67,7 @@ const OrderSchema = new Schema<IOrder>({
         required: true,
     },
     items: {
-        type: [OrderitemSchema],
+        type: [CartItemSchema],
         required: true,
     },
 });
