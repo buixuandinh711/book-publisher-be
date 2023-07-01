@@ -1,0 +1,18 @@
+version: "3"
+services:
+    mongodb:
+        container_name: local_mongo
+        image: mongo:latest
+        restart: unless-stopped
+        ports:
+            - 27017:27017
+        volumes:
+            - ./db/mongo-data:/data/db
+    redis:
+        container_name: local_redis
+        image: redis:latest
+        restart: unless-stopped
+        ports:
+            - 6379:6379
+        volumes:
+            - ./db/redis-data:/data
