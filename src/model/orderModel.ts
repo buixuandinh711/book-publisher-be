@@ -9,7 +9,7 @@ export interface IOrder extends Document {
     email: string;
     fullAddress: string;
     shippingCode: string;
-    note: string;
+    note?: string;
     payment: "COD" | "MOMO";
     items: Types.DocumentArray<ICartItem>;
 }
@@ -72,6 +72,4 @@ const OrderSchema = new Schema<IOrder>({
     },
 });
 
-const OrderModel = model<IOrder>("Order", OrderSchema);
-
-export default OrderModel;
+export const Order = model<IOrder>("Order", OrderSchema);

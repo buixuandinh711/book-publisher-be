@@ -1,7 +1,19 @@
 import "dotenv/config";
 import { Err, Ok, Result } from "../../utils/result";
 import { redisClient } from "../..";
-import { District, GHNResponseData, PreviewInfo, Province, Ward, createPreviewBody } from "./utils";
+import {
+    District,
+    GHNResponseData,
+    PaymentMethod,
+    PreviewInfo,
+    Province,
+    Ward,
+    createOrderBody,
+    createPreviewBody,
+} from "./utils";
+import { ICartItem } from "../../model/cartSchema";
+import { Order } from "../../model/orderModel";
+import { Types } from "mongoose";
 
 const GHN_TOKEN_API = process.env.GHN_TOKEN_API;
 const GHN_SHOP_ID = process.env.GHN_SHOP_ID;
@@ -226,6 +238,72 @@ export const getPreviewOrder = async (
         );
 
         return Ok({ shippingFee: total_fee, shippingTime: expected_delivery_time });
+    } catch (error) {
+        return Err(error as Error);
+    }
+};
+
+export const createOrder = async (
+    userId: Types.ObjectId,
+    orderItems: ICartItem[],
+    name: string,
+    phone: string,
+    email: string,
+    address: string,
+    payment: PaymentMethod,
+    toDistrictId: string,
+    toWardCode: string,
+    fullAddress: string,
+    note?: string
+): Promise<Result<string, Error>> => {
+    const headers = {
+        token: GHN_TOKEN_API,
+        shop_id: GHN_SHOP_ID,
+        "Content-Type": "application/json",
+    };
+
+    const quantity = orderItems.reduce((accumulator, current) => accumulator + current.quantity, 0);
+    const body = createOrderBody(name, phone, address, payment, toDistrictId, toWardCode, quantity, note);
+
+    const endPoint = `${GHN_END_POINT}/v2/shipping-order/create`;
+
+    try {
+        const createOrderRes = await fetch(endPoint, {
+            method: "POST",
+            headers,
+            body,
+        });
+
+        if (!createOrderRes.ok) {
+            throw new Error("Failed to post create order request");
+        }
+
+        const createOrderResData: GHNResponseData = await createOrderRes.json();
+        if (createOrderResData.code !== 200 || createOrderResData.message !== "Success") {
+            throw new Error("Fetched data has failed status");
+        }
+
+        const { order_code: shippingCode } = createOrderResData.data as {
+            order_code: string;
+        };
+
+        const order = new Order({
+            userId,
+            recipientName: name,
+            phone,
+            email,
+            fullAddress,
+            shippingCode,
+            note,
+            payment,
+            items: orderItems,
+        });
+
+        await order.save();
+
+        console.log(order);
+
+        return Ok(order.id);
     } catch (error) {
         return Err(error as Error);
     }

@@ -57,3 +57,38 @@ export const createPreviewBody = (toDistrictId: string, toWardCode: string, quan
     };
     return JSON.stringify(data);
 };
+
+export const createOrderBody = (
+    name: string,
+    phone: string,
+    address: string,
+    payment: PaymentMethod,
+    toDistrictId: string,
+    toWardCode: string,
+    quantity: number,
+    note = ""
+) => {
+    const data = {
+        payment_type_id: payment === "COD" ? 2 : 1,
+        required_note: GHN_REQUIRED_NOTE,
+        to_name: name,
+        to_phone: phone,
+        to_address: address,
+        to_ward_code: toWardCode,
+        to_district_id: toDistrictId,
+        weight: quantity * BOOK_WEIGHT,
+        length: BOOK_LENGTH,
+        width: BOOK_WIDTH,
+        height: quantity * BOOK_HEIGHT,
+        service_type_id: GHN_SERVICE_TYPE,
+        note: note,
+        items: [
+            {
+                name: "Book",
+                quantity: quantity,
+                weight: quantity * BOOK_WEIGHT,
+            },
+        ],
+    };
+    return JSON.stringify(data);
+};
