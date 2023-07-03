@@ -126,7 +126,7 @@ router.post(
     "/submit-order",
     auth,
     express.json(),
-    async (req: Request<unknown, unknown, SubmitOrderFrom>, res: Response) => {
+    async (req: Request<unknown, unknown, SubmitOrderFrom>, res: Response<unknown, { user: IUser }>) => {
         const { name, phone, email, address, payment, province, district, ward, note } = req.body;
 
         if (
@@ -152,8 +152,7 @@ router.post(
         }
 
         const result = await createOrder(
-            user.id,
-            user.cart,
+            user,
             name,
             phone,
             email,
@@ -170,7 +169,7 @@ router.post(
             return res.status(500).send(result.error.message);
         }
 
-        return res.status(201).send(`Order created: ${result.data}`);
+        return res.status(201).send();
     }
 );
 

@@ -11,9 +11,8 @@ import {
     createOrderBody,
     createPreviewBody,
 } from "./utils";
-import { ICartItem } from "../../model/cartSchema";
 import { Order } from "../../model/orderModel";
-import { Types } from "mongoose";
+import { IUser } from "../../model/userModel";
 
 const GHN_TOKEN_API = process.env.GHN_TOKEN_API;
 const GHN_SHOP_ID = process.env.GHN_SHOP_ID;
@@ -244,8 +243,7 @@ export const getPreviewOrder = async (
 };
 
 export const createOrder = async (
-    userId: Types.ObjectId,
-    orderItems: ICartItem[],
+    user: IUser,
     name: string,
     phone: string,
     email: string,
@@ -262,7 +260,7 @@ export const createOrder = async (
         "Content-Type": "application/json",
     };
 
-    const quantity = orderItems.reduce((accumulator, current) => accumulator + current.quantity, 0);
+    const quantity = user.cart.reduce((accumulator, current) => accumulator + current.quantity, 0);
     const body = createOrderBody(name, phone, address, payment, toDistrictId, toWardCode, quantity, note);
 
     const endPoint = `${GHN_END_POINT}/v2/shipping-order/create`;
@@ -288,7 +286,7 @@ export const createOrder = async (
         };
 
         const order = new Order({
-            userId,
+            userId: user.id,
             recipientName: name,
             phone,
             email,
@@ -296,12 +294,13 @@ export const createOrder = async (
             shippingCode,
             note,
             payment,
-            items: orderItems,
+            items: user.cart,
         });
 
         await order.save();
 
-        console.log(order);
+        user.set("cart", []);
+        await user.save();
 
         return Ok(order.id);
     } catch (error) {
