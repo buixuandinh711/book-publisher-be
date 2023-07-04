@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
-import { District, PreviewInfo, Province, Ward } from "../service/checkoutService/utils";
-import { createOrder, getDistrict, getPreviewOrder, getProvince, getWard } from "../service/checkoutService";
+import { District, PreviewInfo, Province, ResponseOrder, Ward } from "../service/checkoutService/types";
+import { createOrder, getDistrict, getOrders, getPreviewOrder, getProvince, getWard } from "../service/checkoutService";
 import { safeCastUint } from "../utils/utils";
 import { auth } from "../middleware/auth";
 import { IUser } from "../model/userModel";
@@ -189,6 +189,25 @@ router.post(
 
         if (!result.ok) {
             console.log(result.error.message);
+            return res.status(500).send(result.error.message);
+        }
+
+        return res.send(result.data);
+    }
+);
+
+router.get(
+    "/orders",
+    express.json(),
+    auth,
+    async (
+        req: Request<unknown, unknown, SubmitOrderFrom>,
+        res: Response<ResponseOrder[] | string, { user: IUser }>
+    ) => {
+        const user = res.locals.user;
+
+        const result = await getOrders(user.id);
+        if (!result.ok) {
             return res.status(500).send(result.error.message);
         }
 

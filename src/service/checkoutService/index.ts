@@ -1,18 +1,13 @@
 import "dotenv/config";
 import { Err, Ok, Result } from "../../utils/result";
 import { redisClient } from "../..";
-import {
-    District,
-    GHNResponseData,
-    PaymentMethod,
-    PreviewInfo,
-    Province,
-    Ward,
-    createOrderBody,
-    createPreviewBody,
-} from "./utils";
-import { Order } from "../../model/orderModel";
+import { createOrderBody, createPreviewBody } from "./utils";
+
+import { District, GHNResponseData, PaymentMethod, PreviewInfo, Province, ResponseOrder, Ward } from "./types";
+import { IOrder, Order } from "../../model/orderModel";
 import { IUser } from "../../model/userModel";
+import { HydratedDocument, Types } from "mongoose";
+import { IBook } from "../../model/bookModel";
 
 const GHN_TOKEN_API = process.env.GHN_TOKEN_API;
 const GHN_SHOP_ID = process.env.GHN_SHOP_ID;
@@ -303,6 +298,37 @@ export const createOrder = async (
         await user.save();
 
         return Ok(order.id);
+    } catch (error) {
+        return Err(error as Error);
+    }
+};
+
+export const getOrders = async (userId: Types.ObjectId): Promise<Result<ResponseOrder[], Error>> => {
+    try {
+        const orders = await Order.find({ userId }).populate<{
+            items: { book: HydratedDocument<IBook>; quantity: number }[];
+        }>("items.book");
+        const responseOrders = orders.map((order) => {
+            const quantity = order.items.reduce((accumulator, current) => accumulator + current.quantity, 0);
+            const total = order.items.reduce(
+                (accumulator, current) => accumulator + current.book.currentPrice * current.quantity,
+                0
+            );
+            const partialOrder = order.toObject() as Partial<IOrder> & Omit<IOrder, "items">;
+            partialOrder.id = partialOrder._id;
+            delete partialOrder._id;
+            delete partialOrder.__v;
+            delete partialOrder.items;
+
+            const responseOrder: ResponseOrder = {
+                ...partialOrder,
+                quantity,
+                total,
+            };
+            return responseOrder;
+        });
+
+        return Ok(responseOrders);
     } catch (error) {
         return Err(error as Error);
     }
