@@ -1,5 +1,3 @@
-import { IOrder } from "../../model/orderModel";
-
 export type PaymentMethod = "COD" | "MOMO";
 
 export interface Province {
@@ -26,9 +24,4 @@ export interface GHNResponseData {
 export interface PreviewInfo {
     shippingFee: number;
     shippingTime: string;
-}
-
-export interface ResponseOrder extends Omit<IOrder, "items"> {
-    quantity: number;
-    total: number;
 }

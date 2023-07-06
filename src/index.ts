@@ -4,6 +4,7 @@ import "dotenv/config";
 import { router as bookRouter } from "./router/bookRouter";
 import { router as userRouter } from "./router/userRouter";
 import { router as checkoutRouter } from "./router/checkoutRouter";
+import { router as orderRouter } from "./router/orderRouter";
 import cors from "cors";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -52,6 +53,7 @@ const main = async () => {
     app.use("/books", bookRouter);
     app.use("/user", userRouter);
     app.use("/checkout", checkoutRouter);
+    app.use("/order", orderRouter);
     app.listen(SERVER_PORT, () => {
         console.log("Server listening on port", SERVER_PORT);
     });
