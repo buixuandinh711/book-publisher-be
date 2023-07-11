@@ -1,3 +1,5 @@
+import { IBook } from "../model/bookModel";
+
 export interface ReqQueryParams {
     page?: string | string[];
     limit?: string | string[];
@@ -26,3 +28,5 @@ export interface PaginatedResult<T> {
     currentPage: number;
     totalPages: number;
 }
+
+export type ResponseBookCartItem = Pick<IBook, "id" | "name" | "currentPrice">

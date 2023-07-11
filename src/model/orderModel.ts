@@ -1,12 +1,11 @@
-import { Schema, Document, Types, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 import { CartItemSchema, ICartItem } from "./cartSchema";
 
-export interface IOrder extends Document {
-    id: Types.ObjectId;
+export interface IOrder {
+    _id: Types.ObjectId;
     userId: Types.ObjectId;
     recipientName: string;
     phone: string;
-    email: string;
     fullAddress: string;
     shippingCode: string;
     note?: string;
@@ -38,18 +37,6 @@ const OrderSchema = new Schema<IOrder>(
                     return phoneRegex.test(email);
                 },
                 message: "Invalid phone number",
-            },
-        },
-        email: {
-            type: String,
-            required: true,
-            validate: {
-                validator: function (email: string) {
-                    // Email validation logic
-                    const emailRegex = /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$/;
-                    return emailRegex.test(email);
-                },
-                message: "Invalid email address",
             },
         },
         fullAddress: {

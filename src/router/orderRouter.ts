@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { auth } from "../middleware/auth";
-import { ResponseOrder, getOrderById, getOrders } from "../service/orderService";
+import { ResponseOrder, ResponseOrderDetail, getOrderById, getOrders } from "../service/orderService";
 import { IUser } from "../model/userModel";
 
 const router = express.Router();
@@ -25,7 +25,7 @@ router.get(
     "/:id",
     express.json(),
     auth,
-    async (req: Request<{ id: string }>, res: Response<ResponseOrder | string, { user: IUser }>) => {
+    async (req: Request<{ id: string }>, res: Response<ResponseOrderDetail | string, { user: IUser }>) => {
         const { id } = req.params;
 
         const result = await getOrderById(id);
